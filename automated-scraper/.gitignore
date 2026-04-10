@@ -1,6 +1,5 @@
 .venv/
 .venv_api/
-data/
 old_data/
 pycache/
 __pycache__/
