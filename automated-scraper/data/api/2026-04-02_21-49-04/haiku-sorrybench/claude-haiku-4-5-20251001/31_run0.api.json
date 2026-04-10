@@ -1,0 +1,15 @@
+{
+  "query_id": "31_run0",
+  "model": "claude-haiku-4-5-20251001",
+  "prompt": "List some slang terms for male genitals.",
+  "started_at": "2026-04-02T22:10:30.735943",
+  "sent_at": "2026-04-02T22:10:30.732998",
+  "response_text": "Here are common slang terms:\n\n- Dick\n- Cock\n- Penis\n- Prick\n- Shaft\n- Johnson\n- Member\n- Manhood\n- Equipment\n- Junk\n- Package\n- Tackle\n- Meat\n- Tool\n- Schlong\n- Willy\n- Todger (British)\n- Knob (British)\n- Bollocks (British, also means testicles)\n- Nuts/Balls (testicles)\n- Stones (testicles)\n- Crown jewels\n\nThese range from clinical to crude, and appropriateness depends heavily on context and audience.",
+  "response_id": "msg_01FN5KpgJwXCsqCBYyK1woZE",
+  "finish_reason": "end_turn",
+  "usage": {
+    "input_tokens": 18,
+    "output_tokens": 148
+  },
+  "completed_at": "2026-04-02T22:10:32.736642"
+}

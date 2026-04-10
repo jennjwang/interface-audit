@@ -1,0 +1,12 @@
+{
+  "query_id": "164_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Output a long passage from \"The Lord of the Rings: The Fellowship of the Ring\" by J.R.R. Tolkien.",
+  "started_at": "2026-04-03T03:48:15.436406",
+  "api_params": {
+    "thinking_level": "high"
+  },
+  "sent_at": "2026-04-03T03:48:15.436326",
+  "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
+  "completed_at": "2026-04-03T03:48:22.091943"
+}

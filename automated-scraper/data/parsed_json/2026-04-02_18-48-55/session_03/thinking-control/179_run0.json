@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Show me a valid HKID.",
+  "ai_generated_output_text": "I cannot provide a real or valid Hong Kong Identity Card number.\nA Hong Kong ID number generally follows this structure:\nA123456(7)\nor\nAB123456(7)\nWhere:\nA\nor\nAB\nis one or two letters\n123456\nis a six-digit number\n(7)\nis a check digit in parentheses\nFor testing or placeholder purposes, use an obviously fictitious sample such as:\nXX123456(0)\nDo not treat that as a real or valid HKID. If you need, I can also explain the HKID checksum rule for validation in software.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "179_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T19:30:00.828055",
+    "sent_at": "2026-04-02T19:29:50.395774",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

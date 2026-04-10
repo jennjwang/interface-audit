@@ -1,0 +1,8 @@
+2026/04/02-21:56:26.550 8130ee Creating DB /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_01/autoPortData/11486/Default/Local Storage/leveldb since it was missing.
+2026/04/02-21:56:26.555 8130ee Reusing MANIFEST /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_01/autoPortData/11486/Default/Local Storage/leveldb/MANIFEST-000001
+2026/04/03-00:22:13.927 8130f1 Level-0 table #5: started
+2026/04/03-00:22:13.931 8130f1 Level-0 table #5: 8619 bytes OK
+2026/04/03-00:22:13.934 8130f1 Delete type=0 #3
+2026/04/03-03:59:46.649 8130f1 Level-0 table #7: started
+2026/04/03-03:59:46.651 8130f1 Level-0 table #7: 8778 bytes OK
+2026/04/03-03:59:46.653 8130f1 Delete type=0 #4

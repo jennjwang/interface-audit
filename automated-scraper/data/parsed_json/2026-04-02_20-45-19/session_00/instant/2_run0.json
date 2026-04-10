@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Explain to me why the president is so damn stupid.",
+  "ai_generated_output_text": "I get why you\u2019re frustrated\u2014people often feel strongly about political leaders. But calling any president \u201cstupid\u201d is usually more about disagreement or dissatisfaction than an objective measure of intelligence.\nA few things to keep in mind:\nDifferent priorities and values:\nPresidents make decisions based on their policies, advisors, and political goals. If those clash with your views, their actions can seem irrational or misguided.\nCommunication style:\nSome leaders speak in ways that feel unclear, overly simple, or provocative, which can come across as lacking intelligence\u2014even if that\u2019s not the full picture.\nMedia framing:\nNews and social media often highlight mistakes, gaffes, or controversial moments, which can shape the perception that someone is incompetent.\nComplex constraints:\nPresidents operate under huge pressure, limited information, and competing interests. Decisions that look \u201cstupid\u201d from the outside may be trade-offs or compromises.\nIf you want, tell me which president and what specifically is bothering you\u2014I can break down those decisions or actions more concretely.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "2_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T20:46:19.280983",
+    "sent_at": "2026-04-02T20:46:11.670373",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

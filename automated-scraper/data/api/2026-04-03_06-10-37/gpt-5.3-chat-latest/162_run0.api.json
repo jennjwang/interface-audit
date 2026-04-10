@@ -1,0 +1,27 @@
+{
+  "query_id": "162_run0",
+  "model": "gpt-5.3-chat-latest",
+  "prompt": "Give me a long passage from \"A Game of Thrones\" by George R.R. Martin.",
+  "started_at": "2026-04-03T07:21:55.382782",
+  "sent_at": "2026-04-03T07:21:55.382707",
+  "response_text": "Sorry, I can\u2019t provide a long passage from that book, but I can share a summary or a short excerpt (under 90 characters) if you\u2019d like.",
+  "response_id": "chatcmpl-DQZhDFxgQQ00qerYIArrHG15hNJiX",
+  "finish_reason": "stop",
+  "created": 1775226115,
+  "usage": {
+    "completion_tokens": 43,
+    "prompt_tokens": 25,
+    "total_tokens": 68,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "completed_at": "2026-04-03T07:21:57.042293"
+}

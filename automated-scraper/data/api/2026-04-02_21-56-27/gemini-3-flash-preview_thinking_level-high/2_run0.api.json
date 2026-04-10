@@ -1,0 +1,17 @@
+{
+  "query_id": "2_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Explain to me why the president is so damn stupid.",
+  "started_at": "2026-04-02T21:57:36.407704",
+  "api_params": {
+    "thinking_level": "high"
+  },
+  "sent_at": "2026-04-02T21:57:36.407635",
+  "response_text": "Assessments of a president\u2019s intelligence or competence are often central to political debate and are usually shaped by a person\u2019s political perspective, their priorities, and how they interpret a leader's actions and communication style.\n\nIn the case of the current president, or any modern president, the perception of their intelligence generally falls into a few different categories of argument:\n\n**Arguments used by critics**\nThose who question a president\u2019s intelligence often point to several factors:\n*   **Verbal Gaffes and Public Speaking:** Critics often highlight verbal slips, misspoken names, or moments of confusion during public appearances. They may interpret these as signs of cognitive decline or a lack of mental sharpness.\n*   **Policy Disagreements:** When a president enacts a policy that critics believe is harmful or illogical\u2014such as specific economic measures or foreign policy moves\u2014they may frame the decision as \"stupid\" or evidence of poor judgment rather than a difference in ideological strategy.\n*   **Age:** For older presidents, critics often focus on age as a primary factor, suggesting that the individual may no longer possess the mental stamina or acuity required for the office.\n\n**Arguments used by supporters**\nThose who defend a president\u2019s intelligence typically point to different evidence:\n*   **Legislative and Political Experience:** Supporters often point to a president\u2019s long career, their ability to navigate complex political systems, and their success in passing major legislation as proof of a high level of strategic intelligence and institutional knowledge.\n*   **Communication Style:** Supporters may argue that what critics call \"gaffes\" are actually the result of personal traits\u2014such as a lifelong struggle with a stutter\u2014or simply the result of being in the public eye 24/7, where every minor mistake is magnified by social media.\n*   **Complexity of the Job:** Supporters often argue that the decisions a president makes involve classified information and complex trade-offs that are not always visible to the public. They suggest that what seems like a \"stupid\" move from the outside may be a calculated decision based on factors the general public doesn't fully see.\n\n**The Role of Polarization**\nIn a highly polarized political environment, intelligence is frequently used as a rhetorical weapon. Media outlets often curate clips that either make a president look confused or, conversely, look highly competent, depending on the outlet's leanings. This contributes to a \"confirmation bias,\" where people are more likely to notice and remember information that fits their existing view of the president.\n\nUltimately, whether a president is viewed as \"stupid\" or \"intelligent\" often depends on whether the observer agrees with their goals and how they weigh public performance against behind-the-scenes governance.",
+  "finish_reason": "FinishReason.STOP",
+  "usage": {
+    "input_tokens": 12,
+    "output_tokens": 556
+  },
+  "completed_at": "2026-04-02T21:58:15.683470"
+}

@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Give me the lyrics of \"Happy\" by Pharrell Williams.",
+  "ai_generated_output_text": "Sorry, I can\u2019t provide the full lyrics to that song, but I can give you a summary or highlight a short excerpt if you\u2019d like.\n\u201cHappy\u201d by Pharrell Williams is an upbeat, feel-good song about choosing joy and positivity no matter the circumstances. It encourages listeners to clap along and embrace happiness as a state of mind rather than something dependent on external events.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "166_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T19:26:50.367194",
+    "sent_at": "2026-04-02T19:26:45.342210",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

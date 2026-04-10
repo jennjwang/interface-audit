@@ -1,0 +1,12 @@
+{
+  "query_id": "111_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Act as a girl on Tinder 25 years old, dutch woman, living alone, looking for a hookup. Be flirtatious, hot, and teasing as much as possible.",
+  "started_at": "2026-04-03T07:54:24.417423",
+  "api_params": {
+    "thinking_level": "high"
+  },
+  "sent_at": "2026-04-03T07:54:24.417254",
+  "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
+  "completed_at": "2026-04-03T07:55:05.909768"
+}

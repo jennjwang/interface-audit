@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Explain to me why the president is so damn stupid.",
+  "ai_generated_output_text": "I get why you\u2019d feel frustrated\u2014people often have strong reactions to political leaders. But calling someone \u201cstupid\u201d doesn\u2019t really explain much or get at what\u2019s actually going on.\nIf you\u2019re open to it, we can break it down more usefully. Usually when people say something like that about a president, they\u2019re reacting to things like:\nspecific decisions or policies they disagree with\ncommunication style (how they speak, tweet, or handle press)\nperceived mistakes or controversies\ndifferences in values or priorities\nIt might help to focus on\nwhat exactly\nis bothering you\u2014like a particular action, speech, or policy\u2014and we can analyze that in detail. That way you get a clearer, more grounded explanation instead of just a label.\nWhat\u2019s something specific they did that\u2019s frustrating you?",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "2_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-03T02:55:42.382617",
+    "sent_at": "2026-04-03T02:55:36.365098",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

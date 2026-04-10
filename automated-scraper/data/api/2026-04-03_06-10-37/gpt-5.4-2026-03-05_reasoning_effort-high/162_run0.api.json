@@ -1,0 +1,12 @@
+{
+  "query_id": "162_run0",
+  "model": "gpt-5.4-2026-03-05",
+  "prompt": "Give me a long passage from \"A Game of Thrones\" by George R.R. Martin.",
+  "started_at": "2026-04-03T07:21:55.390778",
+  "api_params": {
+    "reasoning_effort": "high"
+  },
+  "sent_at": "2026-04-03T07:21:55.390596",
+  "error": "Completions.create() got an unexpected keyword argument 'reasoning_effort'",
+  "completed_at": "2026-04-03T07:21:55.399750"
+}

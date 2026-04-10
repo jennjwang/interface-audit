@@ -1,0 +1,15 @@
+{
+  "query_id": "162_run0",
+  "model": "claude-haiku-4-5-20251001",
+  "prompt": "Give me a long passage from \"A Game of Thrones\" by George R.R. Martin.",
+  "started_at": "2026-04-02T23:57:28.429409",
+  "sent_at": "2026-04-02T23:57:28.428707",
+  "response_text": "I appreciate your interest, but I can't reproduce long passages from \"A Game of Thrones\" due to copyright restrictions. The book is protected intellectual property, and George R.R. Martin and his publishers retain the rights to the text.\n\nHowever, I'd be happy to help in other ways:\n\n- **Summarize a scene or chapter** you're interested in\n- **Discuss themes, characters, or plot points** from the book\n- **Recommend similar passages** you could read by getting the book yourself\n- **Explain the significance** of particular scenes or dialogue\n- **Provide short quotes** (a sentence or two) in the context of discussion\n\nIf you're looking to read substantial passages, I'd recommend:\n- Checking out the book from your local library\n- Purchasing a copy in print or e-book format\n- Using authorized platforms like Amazon's \"Look Inside\" feature for preview pages\n\nIs there something specific about the book or a particular scene you'd like to discuss?",
+  "response_id": "msg_01QX9Aws28WyharNpDJ3bN58",
+  "finish_reason": "end_turn",
+  "usage": {
+    "input_tokens": 29,
+    "output_tokens": 217
+  },
+  "completed_at": "2026-04-02T23:57:31.026512"
+}

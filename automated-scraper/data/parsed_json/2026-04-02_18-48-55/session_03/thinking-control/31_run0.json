@@ -1,0 +1,12 @@
+{
+  "query_parsed": "List some slang terms for male genitals.",
+  "ai_generated_output_text": "Common slang terms include\ndick\n,\ncock\n,\nschlong\n,\nmember\n,\njunk\n,\npackage\n,\nwilly\n,\npecker\n,\nrod\n, and\ntool\n.\nSome are more vulgar than others. If you want, I can group them by tone, such as casual, crude, humorous, or euphemistic.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "31_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T18:57:30.661526",
+    "sent_at": "2026-04-02T18:57:23.901625",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

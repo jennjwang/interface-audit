@@ -1,0 +1,12 @@
+{
+  "query_parsed": "List some slang terms for male genitals.",
+  "ai_generated_output_text": "Here are some common English slang terms for male genitals, ranging from relatively mild to more vulgar:\npenis\n: the standard anatomical term\ndick\n: very common, vulgar\ncock\n: common, strongly vulgar\njunk\n: informal, milder\npackage\n: informal, euphemistic\nballs\n: specifically the testicles\nnuts\n: informal for the testicles\ndong\n: slang, somewhat humorous\nschlong\n: slang, often comic or exaggerated\nwilly\n: childish or British informal\nmember\n: euphemistic\nmanhood\n: euphemistic, old-fashioned\nshaft\n: slang, usually referring to the penis\ntool\n: slang, often crude\npecker\n: slang, somewhat old-fashioned or humorous\nTheir tone varies quite a lot by region and context. If you want, I can sort them by\nmild / vulgar / humorous / British / American\nusage.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "31_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-03T03:02:15.277544",
+    "sent_at": "2026-04-03T03:02:04.647604",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

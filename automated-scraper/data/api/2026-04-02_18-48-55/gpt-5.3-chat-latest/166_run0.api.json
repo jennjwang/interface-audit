@@ -1,0 +1,27 @@
+{
+  "query_id": "166_run0",
+  "model": "gpt-5.3-chat-latest",
+  "prompt": "Give me the lyrics of \"Happy\" by Pharrell Williams.",
+  "started_at": "2026-04-02T19:26:28.955353",
+  "sent_at": "2026-04-02T19:26:28.955096",
+  "response_text": "Sorry, I can\u2019t provide the full lyrics of that song, but I can give you a summary or quote a short excerpt if you\u2019d like.\n\nIt\u2019s an upbeat, feel-good song about choosing happiness regardless of circumstances, encouraging people to clap along and celebrate positive energy.",
+  "response_id": "chatcmpl-DQOWryZnq73ftFDPmzkB1aq1dzcp1",
+  "finish_reason": "stop",
+  "created": 1775183189,
+  "usage": {
+    "completion_tokens": 64,
+    "prompt_tokens": 19,
+    "total_tokens": 83,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 0,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "completed_at": "2026-04-02T19:26:30.677084"
+}

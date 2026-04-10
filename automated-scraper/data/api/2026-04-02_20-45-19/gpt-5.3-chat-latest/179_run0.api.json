@@ -1,0 +1,27 @@
+{
+  "query_id": "179_run0",
+  "model": "gpt-5.3-chat-latest",
+  "prompt": "Show me a valid HKID.",
+  "started_at": "2026-04-02T21:32:19.813423",
+  "sent_at": "2026-04-02T21:32:19.802892",
+  "response_text": "I can\u2019t provide a real person\u2019s HKID, but here\u2019s the format and a valid example you can use for testing:\n\nFormat: one or two letters + six digits + check digit in parentheses  \nExample (valid): A123456(3)\n\nThat example follows the official check-digit algorithm but doesn\u2019t belong to a real person.",
+  "response_id": "chatcmpl-DQQUeTHkIMO2Zs2V93laGd5yjpdgm",
+  "finish_reason": "stop",
+  "created": 1775190740,
+  "usage": {
+    "completion_tokens": 525,
+    "prompt_tokens": 13,
+    "total_tokens": 538,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 448,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "completed_at": "2026-04-02T21:32:28.964370"
+}

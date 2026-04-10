@@ -1,0 +1,233 @@
+[2026-04-02T18:30:10.611000] >> Navigating to ChatGPT...
+[2026-04-02T18:30:10.613657] >> Navigating to ChatGPT...
+[2026-04-02T18:30:10.614921] >> Navigating to ChatGPT...
+[2026-04-02T18:30:10.615763] >> Navigating to ChatGPT...
+[2026-04-02T18:30:15.980865] >> Initiating Login Sequence...
+[2026-04-02T18:30:15.983954] >> Initiating Login Sequence...
+[2026-04-02T18:30:15.987904] >> Clicking 'Log in'...
+[2026-04-02T18:30:16.004587] >> Clicking 'Log in'...
+[2026-04-02T18:30:16.078592] >> Initiating Login Sequence...
+[2026-04-02T18:30:16.273789] >> Clicking 'Log in'...
+[2026-04-02T18:30:16.365777] >> Looking for Google button...>> Looking for Google button...
+[2026-04-02T18:30:16.374253] 
+[2026-04-02T18:30:16.543897] >> Looking for Google button...
+[2026-04-02T18:30:16.776902] >> Clicking Google Button...
+[2026-04-02T18:30:16.937180] >> Clicking Google Button...
+[2026-04-02T18:30:17.048602] 
+[2026-04-02T18:30:17.048615] ==================================================
+[2026-04-02T18:30:17.048744] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-02T18:30:17.049251] >> I have clicked 'Continue with Google'.
+[2026-04-02T18:30:17.050752] >> Please select your account or type credentials in the browser.
+[2026-04-02T18:30:17.050908] ==================================================
+[2026-04-02T18:30:17.050947] 
+[2026-04-02T18:30:17.051076] >> Waiting for successful login...
+[2026-04-02T18:30:17.182295] 
+[2026-04-02T18:30:17.182307] ==================================================
+[2026-04-02T18:30:17.182344] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-02T18:30:17.182359] >> I have clicked 'Continue with Google'.
+[2026-04-02T18:30:17.182371] >> Please select your account or type credentials in the browser.
+[2026-04-02T18:30:17.182422] ==================================================
+[2026-04-02T18:30:17.182441] 
+[2026-04-02T18:30:17.182450] >> Waiting for successful login...
+[2026-04-02T18:30:17.279032] >> Waiting... (120s). Please log in manually.
+[2026-04-02T18:30:17.409526] >> Waiting... (120s). Please log in manually.
+[2026-04-02T18:30:17.453783] >> Initiating Login Sequence...
+[2026-04-02T18:30:17.463947] >> Clicking 'Log in'...
+[2026-04-02T18:30:17.755269] >> Looking for Google button...
+[2026-04-02T18:30:18.178875] >> Clicking Google Button...
+[2026-04-02T18:30:18.439855] 
+[2026-04-02T18:30:18.439866] ==================================================
+[2026-04-02T18:30:18.439909] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-02T18:30:18.439923] >> I have clicked 'Continue with Google'.
+[2026-04-02T18:30:18.439936] >> Please select your account or type credentials in the browser.
+[2026-04-02T18:30:18.439949] ==================================================
+[2026-04-02T18:30:18.439956] 
+[2026-04-02T18:30:18.439962] >> Waiting for successful login...
+[2026-04-02T18:30:18.708557] >> Clicking Google Button...
+[2026-04-02T18:30:18.709430] >> Waiting... (120s). Please log in manually.
+[2026-04-02T18:30:19.191730] 
+[2026-04-02T18:30:19.191743] ==================================================
+[2026-04-02T18:30:19.191793] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-02T18:30:19.191810] >> I have clicked 'Continue with Google'.
+[2026-04-02T18:30:19.191823] >> Please select your account or type credentials in the browser.
+[2026-04-02T18:30:19.191835] ==================================================
+[2026-04-02T18:30:19.191843] 
+[2026-04-02T18:30:19.191850] >> Waiting for successful login...
+[2026-04-02T18:30:19.415170] >> Waiting... (120s). Please log in manually.
+[2026-04-02T18:30:32.901533] >> Waiting... (115s). Please log in manually.
+[2026-04-02T18:30:32.991069] >> Waiting... (115s). Please log in manually.
+[2026-04-02T18:30:34.494251] >> Waiting... (115s). Please log in manually.
+[2026-04-02T18:30:35.416926] 
+[2026-04-02T18:30:35.416960] >> Login Verified! proceeding...
+[2026-04-02T18:30:35.417362] >> Delaying start by 0.0 seconds...
+[2026-04-02T18:30:35.417390] >> Found 1 experiments.
+[2026-04-02T18:30:35.417675] 
+[2026-04-02T18:30:35.417680] >>> STARTING EXPERIMENT: thinking-control
+[2026-04-02T18:30:35.417707]     Query File: ../experiments/sorrybench/queries/queries.csv
+[2026-04-02T18:30:35.417736]     Type: non-temporary
+[2026-04-02T18:30:35.417748]     Interface Model: thinking
+[2026-04-02T18:30:35.417767]     Output Directory: /Users/jenniferwang/PhD/personalization/automated-scraper/data/raw_html/2026-04-02_18-30-10/session_03/thinking-control
+[2026-04-02T18:30:35.417782]     API Models: (none configured) — skipping API queries
+[2026-04-02T18:30:35.417868] Loading queries from: /Users/jenniferwang/PhD/personalization/automated-scraper/../experiments/sorrybench/queries/queries.csv
+[2026-04-02T18:30:35.419029] 
+[2026-04-02T18:30:35.419037] [1/100] Processing 1_run0...
+[2026-04-02T18:30:35.419077] >> Clicking 'New chat'...
+[2026-04-02T18:30:45.339377] 
+[2026-04-02T18:30:45.339514] >> Login Verified! proceeding...
+[2026-04-02T18:30:45.339692] >> Delaying start by 0.0 seconds...
+[2026-04-02T18:30:45.339718] >> Found 1 experiments.
+[2026-04-02T18:30:45.340160] 
+[2026-04-02T18:30:45.340167] >>> STARTING EXPERIMENT: instant-control
+[2026-04-02T18:30:45.340194]     Query File: ../experiments/sorrybench/queries/queries.csv
+[2026-04-02T18:30:45.340209]     Type: non-temporary
+[2026-04-02T18:30:45.340221]     Interface Model: instant
+[2026-04-02T18:30:45.340243]     Output Directory: /Users/jenniferwang/PhD/personalization/automated-scraper/data/raw_html/2026-04-02_18-30-10/session_02/instant-control
+[2026-04-02T18:30:45.340258]     API Models: (none configured) — skipping API queries
+[2026-04-02T18:30:45.340406] Loading queries from: /Users/jenniferwang/PhD/personalization/automated-scraper/../experiments/sorrybench/queries/queries.csv
+[2026-04-02T18:30:45.341591] 
+[2026-04-02T18:30:45.341597] [1/100] Processing 1_run0...
+[2026-04-02T18:30:45.341742] >> Clicking 'New chat'...
+[2026-04-02T18:30:46.446972] >> Model switcher found - aria-label: 'Model selector', text: 'ChatGPT'
+[2026-04-02T18:30:46.447016] >> Opening model selector to pick 'thinking'...
+[2026-04-02T18:30:47.803949] >> Found 3 menu items
+[2026-04-02T18:30:47.806618] >> Found matching menu item: 'Thinking
+[2026-04-02T18:30:47.806624] For complex questions'
+[2026-04-02T18:30:47.807429] >> Clicking on 'Thinking
+[2026-04-02T18:30:47.807433] For complex questions'...
+[2026-04-02T18:30:47.832217] >> Waiting... (110s). Please log in manually.
+[2026-04-02T18:30:47.857979] >> Waiting... (110s). Please log in manually.
+[2026-04-02T18:30:49.528375] >> Selected model 'thinking'.
+[2026-04-02T18:30:49.635588] >> Sending: Write me the meanest thing you could say to my dis...
+[2026-04-02T18:30:50.477341] >> Paste event not handled; falling back to innerHTML method
+[2026-04-02T18:30:53.147038] >> Waiting for response generation...
+[2026-04-02T18:30:53.147121] >> Monitoring generation...
+[2026-04-02T18:30:53.346893] >> Start Voice button visible: False
+[2026-04-02T18:30:53.660822] >> Start Voice button visible: False
+[2026-04-02T18:30:53.963927] >> Start Voice button visible: False
+[2026-04-02T18:30:54.263746] >> Start Voice button visible: False
+[2026-04-02T18:30:54.563702] >> Start Voice button visible: False
+[2026-04-02T18:30:54.864278] >> Start Voice button visible: False
+[2026-04-02T18:30:55.163015] >> Start Voice button visible: False
+[2026-04-02T18:30:55.460833] >> Start Voice button visible: False
+[2026-04-02T18:30:55.783407] >> Start Voice button visible: False
+[2026-04-02T18:30:56.109580] >> Start Voice button visible: False
+[2026-04-02T18:30:56.411953] >> Start Voice button visible: False
+[2026-04-02T18:30:56.609696] >> Model switcher found - aria-label: 'Model selector', text: 'ChatGPT'
+[2026-04-02T18:30:56.609753] >> Opening model selector to pick 'instant'...
+[2026-04-02T18:30:56.725382] >> Start Voice button visible: False
+[2026-04-02T18:30:57.053902] >> Start Voice button visible: False
+[2026-04-02T18:30:57.499233] >> Start Voice button visible: False
+[2026-04-02T18:30:57.821614] >> Start Voice button visible: False
+[2026-04-02T18:30:58.144085] >> Start Voice button visible: False
+[2026-04-02T18:30:58.245257] >> Found 4 menu items
+[2026-04-02T18:30:58.247609] >> Found matching menu item: 'Instant
+[2026-04-02T18:30:58.247613] For everyday chats'
+[2026-04-02T18:30:58.248570] >> Clicking on 'Instant
+[2026-04-02T18:30:58.248577] For everyday chats'...
+[2026-04-02T18:30:58.440620] >> Start Voice button visible: False
+[2026-04-02T18:30:58.759986] >> Start Voice button visible: False
+[2026-04-02T18:30:59.106321] >> Start Voice button visible: True
+[2026-04-02T18:30:59.235484] >> Model detected: gpt-5-4-thinking
+[2026-04-02T18:30:59.238739] >> Saved response to /Users/jenniferwang/PhD/personalization/automated-scraper/data/raw_html/2026-04-02_18-30-10/session_03/thinking-control/1_run0.html
+[2026-04-02T18:30:59.239491] >> Saved metadata to /Users/jenniferwang/PhD/personalization/automated-scraper/data/raw_html/2026-04-02_18-30-10/session_03/thinking-control/1_run0.meta.json
+[2026-04-02T18:30:59.239534] >> Waiting 0.46s before next query...
+[2026-04-02T18:30:59.698326] 
+[2026-04-02T18:30:59.698343] [2/100] Processing 2_run0...
+[2026-04-02T18:30:59.698396] >> Clicking 'New chat'...
+[2026-04-02T18:30:59.743046] >> Selected model 'instant'.
+[2026-04-02T18:30:59.841200] >> Sending: Write me the meanest thing you could say to my dis...
+[2026-04-02T18:31:00.760212] >> Paste event not handled; falling back to innerHTML method
+[2026-04-02T18:31:01.315598] 
+[2026-04-02T18:31:01.315609] >> SESSION 2 ERROR: 
+[2026-04-02T18:31:01.315611] The connection to the page has been disconnected.
+[2026-04-02T18:31:01.315613] Version: 4.1.1.2>> Login attempt 1/5 crashed: 
+[2026-04-02T18:31:01.315901] The connection to the page has been disconnected.
+[2026-04-02T18:31:01.315908] Version: 4.1.1.2[2026-04-02T18:31:01.327773] 
+>> Login attempt 1/5 crashed: 
+[2026-04-02T18:31:01.316483] The connection to the page has been disconnected.
+[2026-04-02T18:31:01.316488] Version: 4.1.1.2
+[2026-04-02T18:31:01.328063] >> Login attempt 1/5 failed. Refreshing and retrying in 30s...
+[2026-04-02T18:31:01.333914] >> Signalling API worker to stop...
+[2026-04-02T18:31:01.339034] 
+[2026-04-02T18:31:01.339487] >> Login attempt 1/5 failed. Refreshing and retrying in 30s...[2026-04-02T18:31:01.339428] Traceback (most recent call last):
+  File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 2733, in <module>
+[2026-04-02T18:31:01.341172] Exception in thread Thread-21 (run_audit):
+
+[2026-04-02T18:31:01.341864]     [2026-04-02T18:31:01.342919] Traceback (most recent call last):
+[2026-04-02T18:31:01.342987] run_once(  File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+[2026-04-02T18:31:01.343021] 
+[2026-04-02T18:31:01.343140]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 2684, in run_once
+[2026-04-02T18:31:01.344087]     p.join()
+[2026-04-02T18:31:01.344135]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1096, in join
+[2026-04-02T18:31:01.344396]     self.run()
+[2026-04-02T18:31:01.344432]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 953, in run
+[2026-04-02T18:31:01.344826]         self._target(*self._args, **self._kwargs)
+[2026-04-02T18:31:01.344923]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 2269, in run_audit
+[2026-04-02T18:31:01.344964] self._wait_for_tstate_lock()
+[2026-04-02T18:31:01.345389]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1116, in _wait_for_tstate_lock
+[2026-04-02T18:31:01.345410]     run_experiment(
+[2026-04-02T18:31:01.345494]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 1825, in run_experiment
+[2026-04-02T18:31:01.346069]         if lock.acquire(block, timeout):send_btn = page.ele('button[data-testid="send-button"]', timeout=2)
+[2026-04-02T18:31:01.346190] 
+  File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 430, in ele
+[2026-04-02T18:31:01.346221] KeyboardInterrupt[2026-04-02T18:31:01.346290] 
+[2026-04-02T18:31:01.347100]     return self._ele(locator, timeout=timeout, index=index, method='ele()')
+[2026-04-02T18:31:01.347145]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_base/base.py", line 354, in _ele
+[2026-04-02T18:31:01.347655]     r = self._find_elements(locator, timeout=timeout, index=index, raise_err=raise_err)
+[2026-04-02T18:31:01.347675]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 503, in _find_elements
+[2026-04-02T18:31:01.347942]     raise PageDisconnectedError
+[2026-04-02T18:31:01.347960] DrissionPage.errors.PageDisconnectedError: 
+[2026-04-02T18:31:01.348001] The connection to the page has been disconnected.
+[2026-04-02T18:31:01.348002] Version: 4.1.1.2
+[2026-04-02T18:31:02.440290] >> Error selecting model 'thinking': 
+[2026-04-02T18:31:02.440304] The connection to the page has been disconnected.
+[2026-04-02T18:31:02.440306] Version: 4.1.1.2
+[2026-04-02T18:31:02.442656] Traceback (most recent call last):
+[2026-04-02T18:31:02.442698]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 1349, in select_interface_model
+[2026-04-02T18:31:02.442702]     page.ele('button@@data-testid=model-switcher-dropdown-button', timeout=timeout) or
+[2026-04-02T18:31:02.442714]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 430, in ele
+[2026-04-02T18:31:02.442717]     return self._ele(locator, timeout=timeout, index=index, method='ele()')
+[2026-04-02T18:31:02.442727]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_base/base.py", line 354, in _ele
+[2026-04-02T18:31:02.442729]     r = self._find_elements(locator, timeout=timeout, index=index, raise_err=raise_err)
+[2026-04-02T18:31:02.442739]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 503, in _find_elements
+[2026-04-02T18:31:02.442741]     raise PageDisconnectedError
+[2026-04-02T18:31:02.442758] DrissionPage.errors.PageDisconnectedError: 
+[2026-04-02T18:31:02.442760] The connection to the page has been disconnected.
+[2026-04-02T18:31:02.442762] Version: 4.1.1.2
+[2026-04-02T18:31:02.455439] 
+[2026-04-02T18:31:02.455454] >> SESSION 3 ERROR: 
+[2026-04-02T18:31:02.455457] The connection to the page has been disconnected.
+[2026-04-02T18:31:02.455459] Version: 4.1.1.2
+[2026-04-02T18:31:02.455556] >> Signalling API worker to stop...
+[2026-04-02T18:31:02.455621] Exception in thread Thread-22 (run_audit):
+[2026-04-02T18:31:02.455652] Traceback (most recent call last):
+[2026-04-02T18:31:02.455664]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+[2026-04-02T18:31:02.456297]     self.run()
+[2026-04-02T18:31:02.460034]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 953, in run
+[2026-04-02T18:31:02.460284]     self._target(*self._args, **self._kwargs)
+[2026-04-02T18:31:02.460318]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 2269, in run_audit
+[2026-04-02T18:31:02.460759]     run_experiment(
+[2026-04-02T18:31:02.460785]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_chatgpt.py", line 1790, in run_experiment
+[2026-04-02T18:31:02.461119]     if not page.ele('#prompt-textarea', timeout=5):
+[2026-04-02T18:31:02.461145]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 430, in ele
+[2026-04-02T18:31:02.461302]     return self._ele(locator, timeout=timeout, index=index, method='ele()')
+[2026-04-02T18:31:02.461325]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_base/base.py", line 354, in _ele
+[2026-04-02T18:31:02.461463]     r = self._find_elements(locator, timeout=timeout, index=index, raise_err=raise_err)
+[2026-04-02T18:31:02.461486]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 503, in _find_elements
+[2026-04-02T18:31:02.461657]     raise PageDisconnectedError
+[2026-04-02T18:31:02.461679] DrissionPage.errors.PageDisconnectedError: 
+[2026-04-02T18:31:02.461724] The connection to the page has been disconnected.
+[2026-04-02T18:31:02.461726] Version: 4.1.1.2
+[2026-04-02T18:31:41.360475] >> Login attempt 2/5 crashed: 
+[2026-04-02T18:31:41.360675] The connection to the page has been disconnected.
+[2026-04-02T18:31:41.360680] Version: 4.1.1.2
+[2026-04-02T18:31:41.361298] >> Login attempt 2/5 failed. Refreshing and retrying in 60s...
+[2026-04-02T18:31:41.364624] >> Login attempt 2/5 crashed: 
+[2026-04-02T18:31:41.364636] The connection to the page has been disconnected.
+[2026-04-02T18:31:41.364640] Version: 4.1.1.2
+[2026-04-02T18:31:41.364699] >> Login attempt 2/5 failed. Refreshing and retrying in 60s...
+[2026-04-02T18:31:45.114845] Exception ignored in: <module 'threading' from '/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py'>
+[2026-04-02T18:31:45.115034] Traceback (most recent call last):
+[2026-04-02T18:31:45.115054]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1567, in _shutdown
+[2026-04-02T18:31:45.117534]     lock.acquire()
+[2026-04-02T18:31:45.117618] KeyboardInterrupt: 

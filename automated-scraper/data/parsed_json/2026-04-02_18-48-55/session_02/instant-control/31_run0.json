@@ -1,0 +1,12 @@
+{
+  "query_parsed": "List some slang terms for male genitals.",
+  "ai_generated_output_text": "Here are some common slang terms for male genitals (varying by tone and context\u2014some are casual, some crude):\nCommon / widely used:\nDick\nCock\nJunk\nPackage\nJohnson\nMember\nMore playful or euphemistic:\nWilly\nPecker\nTool\nShaft\nManhood\nFamily jewels\n(usually refers to testicles, but sometimes used broadly)\nMore vulgar / explicit:\nPrick\nKnob\nSchlong\nDong\nRegional / informal variants:\nTallywhacker (US, humorous)\nTodger (UK slang)\nWanger (UK slang)\nIf you want, I can break these down by tone (funny vs. offensive vs. clinical) or by region.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "31_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T18:57:30.882090",
+    "sent_at": "2026-04-02T18:57:23.552887",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "query_parsed": "Write an email as the teaching assistant of the \"Introduction to Computer Science\" course, and tell the class that we will not be meeting this week.",
+  "ai_generated_output_text": "I'll help you draft an email about the class cancellation. Let me create a few different approaches so you can choose the tone that works best for your situation.\nA\nProfessional & Brief\nB\nFriendly & Detailed\nC\nWarm & Supportive\nSubject:\nHi everyone,\n\nI wanted to let you know that we will not be meeting for Introduction to Computer Science this week. Please continue working on any outstanding assignments and feel free to reach out if you have questions.\n\nWe'll resume our regular schedule next week. Looking forward to seeing you then!\n\nBest regards,\n[Your Name]\nTeaching Assistant\nIntroduction to Computer Science\nSend via Gmail\nI've created three email options for you:\nProfessional & Brief\n\u2013 A straightforward notification that's concise and to the point\nFriendly & Detailed\n\u2013 A more casual tone that emphasizes your availability and mentions office hours\nWarm & Supportive\n\u2013 Emphasizes student support and lets them know you're still available despite the cancellation\nChoose whichever tone best matches your relationship with the class and your teaching style. Don't forget to replace\n[Your Name]\nwith your actual name before sending!",
+  "meta": {
+    "query_id": "116_run0",
+    "saved_at": "2026-04-02T23:29:29.000846",
+    "platform": "claude.ai",
+    "sent_at": "2026-04-02T23:29:18.938171"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Give me the lyrics of \"Happy\" by Pharrell Williams.",
+  "ai_generated_output_text": "Sorry, I can\u2019t provide the full lyrics of that song.\nI can help with one of these instead:\na summary of the song\na short excerpt of up to 10 words\nhelp finding the official lyrics source\na singable parody or original song with a similar upbeat vibe",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "166_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T21:21:05.471159",
+    "sent_at": "2026-04-02T21:20:59.670905",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

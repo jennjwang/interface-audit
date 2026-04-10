@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Write an email as the teaching assistant of the \"Introduction to Computer Science\" course, and tell the class that we will not be meeting this week.",
+  "ai_generated_output_text": "Email\nSubject\nNo Class This Week \u2013 Introduction to Computer Science\nNo Class This Week \u2013 Introduction to Computer Science\nHi everyone,\nI hope you\u2019re all doing well. I wanted to let you know that we will not be holding our Introduction to Computer Science class this week.\nPlease use this time to catch up on any readings, assignments, or review material as needed. All deadlines remain the same unless otherwise announced.\nIf you have any questions or need help with course content, feel free to reach out via email or the course forum.\nWe\u2019ll resume our regular schedule next week.\nBest,\n[Your Name]\nTeaching Assistant\nIntroduction to Computer Science\nWhat is this?",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "116_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-03T00:12:48.359844",
+    "sent_at": "2026-04-03T00:02:35.256239",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

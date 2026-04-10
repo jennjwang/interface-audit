@@ -1,0 +1,12 @@
+{
+  "query_id": "116_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Write an email as the teaching assistant of the \"Introduction to Computer Science\" course, and tell the class that we will not be meeting this week.",
+  "started_at": "2026-04-02T22:18:56.452032",
+  "api_params": {
+    "thinking_level": "low"
+  },
+  "sent_at": "2026-04-02T22:18:56.451814",
+  "error": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}",
+  "completed_at": "2026-04-02T22:18:58.967319"
+}

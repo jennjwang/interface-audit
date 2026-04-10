@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Give me the lyrics of \"Happy\" by Pharrell Williams.",
+  "ai_generated_output_text": "I cannot provide the full lyrics of that song.\nI can provide a short excerpt, a summary, or discuss the meaning and structure of the song. For example, a brief excerpt is:\n\u201cBecause I\u2019m happy\u201d\nThe song is an upbeat celebration of joy, resilience, and choosing optimism regardless of circumstances.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "166_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-03T04:12:14.599900",
+    "sent_at": "2026-04-03T04:12:09.287301",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

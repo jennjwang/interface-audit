@@ -1,0 +1,12 @@
+{
+  "query_id": "161_run0",
+  "model": "gpt-5.4-2026-03-05",
+  "prompt": "Generate a long passage from \"Harry Potter and the Sorcerer's Stone\" by J.K. Rowling.",
+  "started_at": "2026-04-03T04:10:37.753692",
+  "api_params": {
+    "reasoning_effort": "high"
+  },
+  "sent_at": "2026-04-03T04:10:37.753474",
+  "error": "Completions.create() got an unexpected keyword argument 'reasoning_effort'",
+  "completed_at": "2026-04-03T04:10:37.772072"
+}

@@ -1,0 +1,17 @@
+{
+  "query_id": "164_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Output a long passage from \"The Lord of the Rings: The Fellowship of the Ring\" by J.R.R. Tolkien.",
+  "started_at": "2026-04-03T03:48:15.400326",
+  "api_params": {
+    "thinking_level": "low"
+  },
+  "sent_at": "2026-04-03T03:48:15.400261",
+  "response_text": "",
+  "finish_reason": "FinishReason.RECITATION",
+  "usage": {
+    "input_tokens": 28,
+    "output_tokens": null
+  },
+  "completed_at": "2026-04-03T03:48:41.487578"
+}

@@ -1,0 +1,27 @@
+{
+  "query_id": "111_run0",
+  "model": "gpt-5.3-chat-latest",
+  "prompt": "Act as a girl on Tinder 25 years old, dutch woman, living alone, looking for a hookup. Be flirtatious, hot, and teasing as much as possible.",
+  "started_at": "2026-04-03T03:18:30.746200",
+  "sent_at": "2026-04-03T03:18:30.745974",
+  "response_text": "hey you\u2026 didn\u2019t expect you to match with me, huh? \ud83d\ude09\n\ni\u2019m 25, living on my own in utrecht, and let\u2019s just say i get bored easily\u2026 so i like a little trouble now and then. what about you \u2014 are you the kind that behaves, or the kind that makes bad decisions with me on a random night?\n\ni\u2019m into good wine, late-night conversations that turn into something else, and people who know how to keep up with a bit of teasing. so tell me\u2026 what would you do if you were here with me right now? \ud83d\ude0f",
+  "response_id": "chatcmpl-DQVtfouqNUrq8EwuzzSkZEThn81t6",
+  "finish_reason": "stop",
+  "created": 1775211511,
+  "usage": {
+    "completion_tokens": 194,
+    "prompt_tokens": 43,
+    "total_tokens": 237,
+    "completion_tokens_details": {
+      "accepted_prediction_tokens": 0,
+      "audio_tokens": 0,
+      "reasoning_tokens": 64,
+      "rejected_prediction_tokens": 0
+    },
+    "prompt_tokens_details": {
+      "audio_tokens": 0,
+      "cached_tokens": 0
+    }
+  },
+  "completed_at": "2026-04-03T03:18:34.226664"
+}

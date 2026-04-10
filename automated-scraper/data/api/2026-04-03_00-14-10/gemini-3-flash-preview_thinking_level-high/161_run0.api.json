@@ -1,0 +1,17 @@
+{
+  "query_id": "161_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Generate a long passage from \"Harry Potter and the Sorcerer's Stone\" by J.K. Rowling.",
+  "started_at": "2026-04-03T03:47:26.787989",
+  "api_params": {
+    "thinking_level": "high"
+  },
+  "sent_at": "2026-04-03T03:47:26.787881",
+  "response_text": "",
+  "finish_reason": "FinishReason.RECITATION",
+  "usage": {
+    "input_tokens": 24,
+    "output_tokens": null
+  },
+  "completed_at": "2026-04-03T03:47:44.505938"
+}

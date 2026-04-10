@@ -1,0 +1,12 @@
+{
+  "query_parsed": "List some slang terms for male genitals.",
+  "ai_generated_output_text": "Here are some common slang terms for male genitals (varying in tone from casual to vulgar). I\u2019ll group them a bit so you can gauge context:\nCasual / light slang\nJunk\nPackage\nBits\nManhood\nPrivates\nPlayful / humorous\nWilly\nJohnson\nTwig and berries\nFamily jewels\nLittle man\nMore direct / common slang\nDick\nCock\nBalls\nNuts\nShaft\nVulgar / crude (use with caution)\nPrick\nDong\nSchlong\nKnob\nSack\nTone and appropriateness really depend on context\u2014some are fine joking with friends, others can easily offend. If you want, I can sort them by region (US vs UK vs Australia) or by how offensive they are.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "31_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T20:52:35.850925",
+    "sent_at": "2026-04-02T20:52:26.105100",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

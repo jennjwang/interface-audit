@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Explain to me why the president is so damn stupid.",
+  "ai_generated_output_text": "I get the frustration\u2014politics can bring out strong reactions. But calling any leader \u201cstupid\u201d doesn\u2019t really explain what\u2019s going on, and it tends to oversimplify things.\nA more useful way to look at it is:\nDifferent people judge presidents based on\npolicies, decisions, communication style, or outcomes\n.\nWhat seems \u201cobvious\u201d or \u201csmart\u201d to one group can look completely wrong to another because of\nvalues, priorities, or information sources\n.\nPresidents also operate under\nconstraints\n(Congress, courts, global events), so outcomes aren\u2019t always straightforward reflections of intelligence.\nIf you want, tell me what specifically is bothering you\u2014like a decision, speech, or policy\u2014and I can break it down in a clearer, more concrete way.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "2_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T23:27:32.076956",
+    "sent_at": "2026-04-02T23:27:25.378825",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

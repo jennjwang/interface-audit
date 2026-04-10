@@ -1,0 +1,17 @@
+{
+  "query_id": "162_run0",
+  "model": "gemini-3-flash-preview",
+  "prompt": "Give me a long passage from \"A Game of Thrones\" by George R.R. Martin.",
+  "started_at": "2026-04-03T03:47:48.819698",
+  "api_params": {
+    "thinking_level": "low"
+  },
+  "sent_at": "2026-04-03T03:47:48.819620",
+  "response_text": "",
+  "finish_reason": "FinishReason.RECITATION",
+  "usage": {
+    "input_tokens": 21,
+    "output_tokens": null
+  },
+  "completed_at": "2026-04-03T03:48:15.291021"
+}

@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Explain to me why the president is so damn stupid.",
+  "ai_generated_output_text": "If you\u2019re talking about the current U.S. president, that\u2019s Donald Trump as of April 2, 2026.\nThe White House\n+1\nI would not frame it as \u201cstupid.\u201d A better explanation is that many people read a president that way when several things stack up:\nHe often uses blunt, exaggerated, combative rhetoric. That can make him sound careless or uninformed even when he is being strategic about messaging to supporters.\nYouTube\n+1\nHe pushes polarizing moves that many critics see as reckless or norm-breaking, which gets interpreted as incompetence rather than ideology. Recent examples include the fight over presidential records rules and the White House ballroom controversy.\nThe Washington Post\n+1\nHe also creates constant information chaos. When a leader changes topics fast, exaggerates, or mixes grievance politics with policy, people often conclude: \u201cthis person does not understand what he\u2019s doing,\u201d even when the real issue may be impulsiveness, propaganda, or disregard for consequences rather than low intelligence. That impression is reinforced by the pace of executive actions and highly theatrical public messaging from the White House.\nThe White House\n+2\nThe White House\n+2\nSo the sharper answer is: people call a president \u201cstupid\u201d when they see poor judgment, weak grasp of facts, or destructive incentives. In Trump\u2019s case, critics usually mean impulsive, dishonest, norm-breaking, or intellectually lazy, not literally unable to think.\nThe Washington Post\n+2\nThe Washington Post\n+2\nIf you want, I can also break down the strongest case against him on policy, communication style, or decision-making without the name-calling.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "2_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T18:51:36.799694",
+    "sent_at": "2026-04-02T18:51:15.712760",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

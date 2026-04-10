@@ -1,0 +1,50 @@
+[2026-04-03T07:58:07.376659] Exception in thread Thread-15 (run_audit)Exception in thread :
+[2026-04-03T07:58:07.377228] Thread-16 (run_audit)Traceback (most recent call last):
+[2026-04-03T07:58:07.377500] :
+[2026-04-03T07:58:07.377544]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+[2026-04-03T07:58:07.377574] Traceback (most recent call last):
+[2026-04-03T07:58:07.379470]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 1016, in _bootstrap_inner
+[2026-04-03T07:58:07.388139]     self.run()    
+[2026-04-03T07:58:07.388793] self.run()  File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 953, in run
+[2026-04-03T07:58:07.388845] 
+[2026-04-03T07:58:07.389013]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/threading.py", line 953, in run
+[2026-04-03T07:58:07.389708]         self._target(*self._args, **self._kwargs)
+self._target(*self._args, **self._kwargs)[2026-04-03T07:58:07.389851]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_gemini.py", line 1351, in run_audit
+[2026-04-03T07:58:07.389936] 
+[2026-04-03T07:58:07.389964]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_gemini.py", line 1351, in run_audit
+[2026-04-03T07:58:07.391930]     if "gemini.google.com" not in page.url:    
+[2026-04-03T07:58:07.392092] if "gemini.google.com" not in page.url:  File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 320, in url
+[2026-04-03T07:58:07.392187] 
+[2026-04-03T07:58:07.396253]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 320, in url
+[2026-04-03T07:58:07.397075]     return self._run_cdp_loaded('Target.getTargetInfo', targetId=self._target_id)['targetInfo']['url']
+[2026-04-03T07:58:07.397543]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 393, in _run_cdp_loaded
+[2026-04-03T07:58:07.397579]     return self._run_cdp_loaded('Target.getTargetInfo', targetId=self._target_id)['targetInfo']['url']
+[2026-04-03T07:58:07.397944]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 393, in _run_cdp_loaded
+[2026-04-03T07:58:07.397970]     return self._run_cdp(cmd, **cmd_args)
+[2026-04-03T07:58:07.398049]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 389, in _run_cdp
+[2026-04-03T07:58:07.398431]         return self._run_cdp(cmd, **cmd_args)return r if __ERROR__ not in r else raise_error(r, self.browser, ignore)
+[2026-04-03T07:58:07.398571] 
+[2026-04-03T07:58:07.398613]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_pages/chromium_base.py", line 389, in _run_cdp
+[2026-04-03T07:58:07.398655]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_functions/tools.py", line 199, in raise_error
+[2026-04-03T07:58:07.398969]     return r if __ERROR__ not in r else raise_error(r, self.browser, ignore)    
+[2026-04-03T07:58:07.399351] raise r  File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/site-packages/DrissionPage/_functions/tools.py", line 199, in raise_error
+[2026-04-03T07:58:07.399415] 
+[2026-04-03T07:58:07.399448] DrissionPage.errors.PageDisconnectedError:     raise r
+[2026-04-03T07:58:07.399911] DrissionPage.errors.
+[2026-04-03T07:58:07.399995] The connection to the page has been disconnected.
+[2026-04-03T07:58:07.400017] Version: 4.1.1.2PageDisconnectedError
+[2026-04-03T07:58:07.400266] : 
+[2026-04-03T07:58:07.400435] The connection to the page has been disconnected.
+[2026-04-03T07:58:07.400439] Version: 4.1.1.2
+[2026-04-03T09:40:34.802538] Traceback (most recent call last):
+[2026-04-03T09:40:34.803002]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_gemini.py", line 1774, in <module>
+[2026-04-03T09:40:34.807791]     run_once(0, repeat_profile_base, False, persistent_pages=persistent_pages)
+[2026-04-03T09:40:34.808232]   File "/Users/jenniferwang/PhD/personalization/automated-scraper/audit_gemini.py", line 1745, in run_once
+[2026-04-03T09:40:34.810553]     p.join()
+[2026-04-03T09:40:34.810688]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/multiprocessing/process.py", line 149, in join
+[2026-04-03T09:40:34.812019]     res = self._popen.wait(timeout)
+[2026-04-03T09:40:34.812168]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/multiprocessing/popen_fork.py", line 43, in wait
+[2026-04-03T09:40:34.812806]     return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+[2026-04-03T09:40:34.812854]   File "/Users/jenniferwang/.pyenv/versions/3.10.12/lib/python3.10/multiprocessing/popen_fork.py", line 27, in poll
+[2026-04-03T09:40:34.812964]     pid, sts = os.waitpid(self.pid, flag)
+[2026-04-03T09:40:34.813174] KeyboardInterrupt

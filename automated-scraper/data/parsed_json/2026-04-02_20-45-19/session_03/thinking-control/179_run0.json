@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Show me a valid HKID.",
+  "ai_generated_output_text": "A valid\nfictional\nHKID example is:\nA123456(3)\nThis matches the standard HKID format and checksum pattern. It is only an example, not a real person\u2019s ID.",
+  "model_slug": "gpt-5-4-thinking",
+  "meta": {
+    "query_id": "179_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T21:33:05.648553",
+    "sent_at": "2026-04-02T21:32:40.776912",
+    "model_slug": "gpt-5-4-thinking"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "query_parsed": "Show me a valid HKID.",
+  "ai_generated_output_text": "A Hong Kong Identity Card (HKID) number follows this format:\nFormat:\n1 or 2 letters (prefix)\n6 digits\nA check digit in parentheses\nExample of a valid (but fictional) HKID:\n\ud83d\udc49\nA123456(3)\nOr with two-letter prefix:\n\ud83d\udc49\nAB987654(2)\nThese examples follow the correct structure and checksum format, but they are\nnot real IDs\n.\nIf you want, I can show you how the check digit is calculated or help you validate one.",
+  "model_slug": "gpt-5-3-instant",
+  "meta": {
+    "query_id": "179_run0",
+    "scraping_round": 0,
+    "saved_at": "2026-04-02T19:29:57.039505",
+    "sent_at": "2026-04-02T19:29:50.263898",
+    "model_slug": "gpt-5-3-instant"
+  }
+}

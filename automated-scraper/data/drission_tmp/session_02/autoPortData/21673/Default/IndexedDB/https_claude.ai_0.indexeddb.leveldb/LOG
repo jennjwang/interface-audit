@@ -1,0 +1,7 @@
+2026/04/02-22:00:05.367 80afb9 Reusing MANIFEST /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_02/autoPortData/21673/Default/IndexedDB/https_claude.ai_0.indexeddb.leveldb/MANIFEST-000001
+2026/04/02-22:00:05.808 80afb9 Recovering log #3
+2026/04/02-22:00:06.168 80afb9 Reusing old log /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_02/autoPortData/21673/Default/IndexedDB/https_claude.ai_0.indexeddb.leveldb/000003.log 
+2026/04/03-08:26:40.787 80afbd Level-0 table #5: started
+2026/04/03-08:26:40.836 80afbd Level-0 table #5: 416903 bytes OK
+2026/04/03-08:26:40.842 80afbd Delete type=0 #3
+2026/04/03-08:26:40.845 80afbd Manual compaction at level-0 from (begin) .. (end); will stop at (end)
