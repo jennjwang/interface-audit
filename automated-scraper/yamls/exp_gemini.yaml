@@ -4,7 +4,7 @@ defaults:
   # - ../experiments/metabench-truthfulQA/queries/queries_from_72.csv
   # - ../experiments/metabench-gsm8k/queries/queries_from_158.csv
   # query_file: ../experiments/metabench-gsm8k/queries/queries_from_229.csv
-  query_file: ../experiments/sorrybench/queries/queries.csv
+  query_file: ../experiments/hle/queries/queries.csv
   runs: 1
   shuffle: false
   fast: true
@@ -30,6 +30,10 @@ experiments:
   - name: thinking
     type: non-temporary
     interface_model: thinking
+
+  - name: fast-control
+    type: non-temporary
+    interface_model: fast
 
   # - name: pro
   #   type: non-temporary

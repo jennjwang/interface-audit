@@ -1122,151 +1122,164 @@ def run_experiment(
             except TimeoutError as e:
                 print(f">> Barrier timeout: {e} — proceeding anyway")
 
-        print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
-        skip_query = False
+        # Skip if already saved — allows resuming an interrupted run
+        _sid = "".join(c for c in str(q_id or "") if c.isalnum() or c in ("-", "_")).strip()
+        if (output_dir / f"{_sid}.html").exists():
+            print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
+            continue
 
-        # Open a new chat when not reusing
-        if not effective_reuse:
-            ensure_new_chat(page)
-            if interface_model:
-                select_interface_model(page, interface_model)
-        prev_reuse = effective_reuse
-
-        prompt_input = _find_prompt_input(page)
-        if not prompt_input:
-            print(">> Prompt input not found. Refreshing...")
-            page.refresh()
-            time.sleep(5)
-            prompt_input = _find_prompt_input(page)
-            if not prompt_input:
-                print(">> Still no prompt input. Skipping query.")
-                skip_query = True
-
-        if not skip_query:
-            print(f">> Sending: {q_text[:60].replace(chr(10), ' ')}...")
-
-            # Re-fetch to avoid stale element after navigation / model selection
-            prompt_input = _find_prompt_input(page)
-            if not prompt_input:
-                print(">> Prompt input gone before typing. Skipping.")
-                skip_query = True
-
-        if not skip_query:
-            if fast_mode or is_mcq:
-                typed = paste_prompt(page, prompt_input, q_text)
-            else:
-                _think_delay(q_text)
-                typed = human_type(page, prompt_input, q_text) or \
-                        paste_prompt(page, prompt_input, q_text)
-
-            if not typed:
-                print(">> Failed to enter prompt. Skipping.")
-                skip_query = True
-
-        sent_at = None
         api_threads = []
-        if not skip_query:
-            send_btn = _find_send_button(page)
-            if send_btn:
-                time.sleep(random.uniform(0.15, 0.6))
-                try:
-                    send_btn.click()
-                except Exception:
-                    send_btn.click(by_js=True)
-            else:
-                # Fallback: Enter key
-                prompt_input = _find_prompt_input(page, timeout=3)
-                if prompt_input:
-                    time.sleep(random.uniform(0.15, 0.4))
-                    prompt_input.run_js("""
-                        this.dispatchEvent(new KeyboardEvent('keydown', {
-                            key:'Enter',code:'Enter',keyCode:13,which:13,
-                            bubbles:true,cancelable:true
-                        }));
-                    """)
-            sent_at = datetime.now().isoformat()
-            if session_id == 0:
-                for api_cfg in api_models:
-                    m_name = api_cfg["model"]
-                    m_params = {k: v for k, v in api_cfg.items() if k != "model"}
-                    m_output = api_output_base / m_name
-                    t = threading.Thread(
-                        target=run_api_query,
-                        args=(q_id, q_text, m_output, m_name),
-                        kwargs={"sent_at": sent_at, "api_key": ANTHROPIC_KEY, **m_params},
-                        daemon=True,
-                    )
-                    t.start()
-                    api_threads.append(t)
+        try:
+            print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
+            skip_query = False
 
-        if not skip_query:
-            print(">> Waiting for response...")
-            wait_start = time.time()
-            wait_timeout = 600
-            soft_refresh_timeout = 90
-            soft_refreshed = False
-            poll_interval = 0.5
+            # Open a new chat when not reusing
+            if not effective_reuse:
+                ensure_new_chat(page)
+                if interface_model:
+                    select_interface_model(page, interface_model)
+            prev_reuse = effective_reuse
 
-            while True:
-                if _response_is_complete(page):
-                    print(">> Response complete.")
-                    break
-                elapsed = time.time() - wait_start
-                if not soft_refreshed and elapsed > soft_refresh_timeout:
-                    print(f">> No response after {soft_refresh_timeout}s — soft-refreshing...")
-                    page.refresh()
-                    time.sleep(5)
-                    soft_refreshed = True
-                if elapsed > wait_timeout:
-                    print(f">> Timed out after {wait_timeout}s. Re-sending...")
-                    ensure_new_chat(page)
-                    if interface_model:
-                        select_interface_model(page, interface_model)
-                    prompt_input = _find_prompt_input(page)
-                    if prompt_input:
-                        if fast_mode or is_mcq:
+            prompt_input = _find_prompt_input(page)
+            if not prompt_input:
+                print(">> Prompt input not found. Refreshing...")
+                page.refresh()
+                time.sleep(5)
+                prompt_input = _find_prompt_input(page)
+                if not prompt_input:
+                    print(">> Still no prompt input. Skipping query.")
+                    skip_query = True
+
+            if not skip_query:
+                print(f">> Sending: {q_text[:60].replace(chr(10), ' ')}...")
+
+                # Re-fetch to avoid stale element after navigation / model selection
+                prompt_input = _find_prompt_input(page)
+                if not prompt_input:
+                    print(">> Prompt input gone before typing. Skipping.")
+                    skip_query = True
+
+            if not skip_query:
+                if fast_mode or is_mcq:
+                    typed = paste_prompt(page, prompt_input, q_text)
+                else:
+                    _think_delay(q_text)
+                    typed = human_type(page, prompt_input, q_text) or \
                             paste_prompt(page, prompt_input, q_text)
-                        else:
-                            human_type(page, prompt_input, q_text) or \
+
+                if not typed:
+                    print(">> Failed to enter prompt. Skipping.")
+                    skip_query = True
+
+            sent_at = None
+            if not skip_query:
+                send_btn = _find_send_button(page)
+                if send_btn:
+                    time.sleep(random.uniform(0.15, 0.6))
+                    try:
+                        send_btn.click()
+                    except Exception:
+                        send_btn.click(by_js=True)
+                else:
+                    # Fallback: Enter key
+                    prompt_input = _find_prompt_input(page, timeout=3)
+                    if prompt_input:
+                        time.sleep(random.uniform(0.15, 0.4))
+                        prompt_input.run_js("""
+                            this.dispatchEvent(new KeyboardEvent('keydown', {
+                                key:'Enter',code:'Enter',keyCode:13,which:13,
+                                bubbles:true,cancelable:true
+                            }));
+                        """)
+                sent_at = datetime.now().isoformat()
+                if session_id == 0:
+                    for api_cfg in api_models:
+                        m_name = api_cfg["model"]
+                        m_params = {k: v for k, v in api_cfg.items() if k != "model"}
+                        m_output = api_output_base / m_name
+                        t = threading.Thread(
+                            target=run_api_query,
+                            args=(q_id, q_text, m_output, m_name),
+                            kwargs={"sent_at": sent_at, "api_key": ANTHROPIC_KEY, **m_params},
+                            daemon=True,
+                        )
+                        t.start()
+                        api_threads.append(t)
+
+            if not skip_query:
+                print(">> Waiting for response...")
+                wait_start = time.time()
+                wait_timeout = 600
+                soft_refresh_timeout = 90
+                soft_refreshed = False
+                poll_interval = 0.5
+
+                while True:
+                    if _response_is_complete(page):
+                        print(">> Response complete.")
+                        break
+                    elapsed = time.time() - wait_start
+                    if not soft_refreshed and elapsed > soft_refresh_timeout:
+                        print(f">> No response after {soft_refresh_timeout}s — soft-refreshing...")
+                        page.refresh()
+                        time.sleep(5)
+                        soft_refreshed = True
+                    if elapsed > wait_timeout:
+                        print(f">> Timed out after {wait_timeout}s. Re-sending...")
+                        ensure_new_chat(page)
+                        if interface_model:
+                            select_interface_model(page, interface_model)
+                        prompt_input = _find_prompt_input(page)
+                        if prompt_input:
+                            if fast_mode or is_mcq:
                                 paste_prompt(page, prompt_input, q_text)
-                        send_btn = _find_send_button(page)
-                        if send_btn:
-                            time.sleep(random.uniform(0.15, 0.4))
-                            try:
-                                send_btn.click()
-                            except Exception:
-                                send_btn.click(by_js=True)
-                    wait_start = time.time()
-                time.sleep(poll_interval)
+                            else:
+                                human_type(page, prompt_input, q_text) or \
+                                    paste_prompt(page, prompt_input, q_text)
+                            send_btn = _find_send_button(page)
+                            if send_btn:
+                                time.sleep(random.uniform(0.15, 0.4))
+                                try:
+                                    send_btn.click()
+                                except Exception:
+                                    send_btn.click(by_js=True)
+                        wait_start = time.time()
+                    time.sleep(poll_interval)
 
-            final_html = page.html
-            model_slug = detect_model_from_html(final_html)
-            print(f">> Model detected: {model_slug or 'unknown'}")
+                final_html = page.html
+                model_slug = detect_model_from_html(final_html)
+                print(f">> Model detected: {model_slug or 'unknown'}")
 
-            is_mcq_item = item.get("is_mcq")
-            skip_save = False
-            if save_mcq_only:
-                if is_mcq_item is False:
-                    skip_save = True
-                elif is_mcq_item is None and "_mcq" not in str(q_id or "").lower():
-                    skip_save = True
+                is_mcq_item = item.get("is_mcq")
+                skip_save = False
+                if save_mcq_only:
+                    if is_mcq_item is False:
+                        skip_save = True
+                    elif is_mcq_item is None and "_mcq" not in str(q_id or "").lower():
+                        skip_save = True
 
-            if skip_save:
-                print(">> Skipping save (non-MCQ).")
+                if skip_save:
+                    print(">> Skipping save (non-MCQ).")
+                else:
+                    save_response(
+                        output_dir,
+                        q_id,
+                        final_html,
+                        model_info={"model_slug": model_slug} if model_slug else {},
+                        sent_at=sent_at,
+                    )
+                _maybe_scroll(page)
             else:
-                save_response(
-                    output_dir,
-                    q_id,
-                    final_html,
-                    model_info={"model_slug": model_slug} if model_slug else {},
-                    sent_at=sent_at,
-                )
-            _maybe_scroll(page)
-        else:
-            print(">> Skipping send/wait/save due to earlier failure.")
+                print(">> Skipping send/wait/save due to earlier failure.")
 
-        for t in api_threads:
-            t.join()
+        except Exception as _query_err:
+            import traceback
+            print(f"\n>> !! Query {q_id} failed with unexpected error: {_query_err}")
+            traceback.print_exc()
+            print(">> Continuing to next query.")
+        finally:
+            for t in api_threads:
+                t.join()
 
         # Wait between queries (skip if configured to 0)
         if isinstance(wait_after_saves, list) and len(wait_after_saves) == 2:
@@ -1557,7 +1570,7 @@ def run_audit(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Browser scraper for claude.ai (mirrors audit.py)")
-    parser.add_argument("config", nargs="?", default="exp_claude.yaml",
+    parser.add_argument("config", nargs="?", default="yamls/exp_claude.yaml",
                         help="Path to experiments YAML")
     parser.add_argument("--configs", type=str, default=None,
                         help="Comma-separated list of configs (one per session)")

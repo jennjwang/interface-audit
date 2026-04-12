@@ -1762,229 +1762,262 @@ def run_experiment(
             except Exception as e:
                 print(f">> Barrier wait failed ({e}) — proceeding anyway")
 
-        print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
-        skip_query = False
+        # Skip if already saved — allows resuming an interrupted run
+        _sid = "".join(c for c in str(q_id or "") if c.isalnum() or c in ("-", "_")).strip()
+        if (output_dir / f"{_sid}.html").exists():
+            print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
+            continue
 
-        # Check if this query will update memory — if so, snapshot first
-        if item.get("updated"):
-            print(">> Query has updated:true — taking memory snapshot before processing...")
-            page.get('https://chatgpt.com/#settings/Personalization')
-            time.sleep(2)
-            try:
-                page.ele('text:Manage', timeout=2).click()
-                time.sleep(1.5)
-                _save_memories_snapshot(
-                    page,
-                    run_id=run_id,
-                    session_id=session_id,
-                    label=f"before_{q_id}",
-                    persona_name=persona_name,
-                    persona_id=persona_id,
-                )
-                # Close the memory dialog
-                close_btn = page.ele('css:button[aria-label="Close"]', timeout=2)
-                if close_btn:
-                    close_btn.click()
-                time.sleep(0.5)
-            except Exception as exc:
-                print(f">> Failed to take memory snapshot: {exc}")
-            # Navigate back to chat
-            page.get("https://chatgpt.com/")
-            time.sleep(2)
+        try:
+            print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
+            skip_query = False
 
-        # 1. New Chat — only when the current query does NOT want to reuse
-        if not effective_reuse:
-            use_temp = (exp_type == "temporary") and (exp_name != "json_queries")
-            ensure_new_chat(page, attempts=3, temporary_chat=use_temp)
-            # Select interface model after opening a new chat
-            if interface_model:
-                select_interface_model(page, interface_model)
-        prev_reuse = effective_reuse
+            # Check if this query will update memory — if so, snapshot first
+            if item.get("updated"):
+                print(">> Query has updated:true — taking memory snapshot before processing...")
+                page.get('https://chatgpt.com/#settings/Personalization')
+                time.sleep(2)
+                try:
+                    page.ele('text:Manage', timeout=2).click()
+                    time.sleep(1.5)
+                    _save_memories_snapshot(
+                        page,
+                        run_id=run_id,
+                        session_id=session_id,
+                        label=f"before_{q_id}",
+                        persona_name=persona_name,
+                        persona_id=persona_id,
+                    )
+                    # Close the memory dialog
+                    close_btn = page.ele('css:button[aria-label="Close"]', timeout=2)
+                    if close_btn:
+                        close_btn.click()
+                    time.sleep(0.5)
+                except Exception as exc:
+                    print(f">> Failed to take memory snapshot: {exc}")
+                # Navigate back to chat
+                page.get("https://chatgpt.com/")
+                time.sleep(2)
 
-        if not page.ele('#prompt-textarea', timeout=5):
-            print(">> Input box still missing. Refreshing...")
-            page.refresh()
-            time.sleep(5)
+            # 1. New Chat — only when the current query does NOT want to reuse
+            if not effective_reuse:
+                use_temp = (exp_type == "temporary") and (exp_name != "json_queries")
+                ensure_new_chat(page, attempts=3, temporary_chat=use_temp)
+                # Select interface model after opening a new chat
+                if interface_model:
+                    select_interface_model(page, interface_model)
+            prev_reuse = effective_reuse
 
-        # Check for unusual-activity block before attempting each query
-        _check_unusual_activity(page)
-
-        is_mcq = item.get("is_mcq")
-        if is_mcq is None:
-            is_mcq = "_mcq" in str(q_id or "").lower()
-
-        # 2. Type Prompt
-        print(f">> Sending: {q_preview[:50]}...")
-        if fast_mode or is_mcq:
-            if not paste_prompt(page, '#prompt-textarea', q_text):
-                print(">> Failed to paste prompt.")
-                skip_query = True
-        else:
-            _think_delay(q_text)
-            if not human_type(page, '#prompt-textarea', q_text):
-                if not paste_prompt(page, '#prompt-textarea', q_text):
-                    print(">> Failed to type or paste prompt.")
-                    skip_query = True
-
-        # 3. Click Send
-        send_btn = page.ele('button[data-testid="send-button"]', timeout=2)
-        sent_at = None
-        if not skip_query:
-            sent_at = datetime.now().isoformat()
-            if send_btn:
-                time.sleep(random.uniform(0.15, 0.6))
-                send_btn.click()
-            else:
-                time.sleep(random.uniform(0.15, 0.6))
-                page.ele('#prompt-textarea').input('\n')
-
-        if not skip_query:
-            # 4. Wait for Response
-            print(">> Waiting for response generation...")
-            final_response_html = None
-
-            # We monitor text stability and completion buttons
-            print(">> Monitoring generation...")
-            poll_interval = 0.2
-            wait_timeout = 600  # 10 minutes hard timeout (re-send query)
-            soft_refresh_timeout = 90  # seconds before a soft page refresh (no re-send)
-            soft_refreshed = False
-            wait_start = time.time()
-
-            while True:
-                voice_visible = 'start voice' in page.html.lower()
-                print(f">> Start Voice button visible: {voice_visible}")
-                if voice_visible:
-                    final_response_html = page.html
-                    break
-                elapsed = time.time() - wait_start
-                # Soft refresh: unstick a stalled render without re-sending the query
-                if not soft_refreshed and elapsed > soft_refresh_timeout:
-                    print(f">> No response after {soft_refresh_timeout}s — soft-refreshing page to unstick...")
-                    page.refresh()
-                    time.sleep(5)
-                    soft_refreshed = True
-                if elapsed > wait_timeout:
-                    print(f">> Response timed out after {wait_timeout}s. Refreshing page and re-sending query...")
-                    page.refresh()
-                    time.sleep(5)
-                    if not page.ele('#prompt-textarea', timeout=10):
-                        print(">> Input box not found after refresh. Retrying...")
-                        page.refresh()
-                        time.sleep(5)
-                    _check_unusual_activity(page)
-                    if fast_mode or is_mcq:
-                        paste_prompt(page, '#prompt-textarea', q_text)
-                    else:
-                        human_type(page, '#prompt-textarea', q_text) or paste_prompt(page, '#prompt-textarea', q_text)
-                    send_btn = page.ele('button[data-testid="send-button"]', timeout=2)
-                    if send_btn:
-                        time.sleep(random.uniform(0.15, 0.6))
-                        send_btn.click()
-                    else:
-                        time.sleep(random.uniform(0.15, 0.6))
-                        page.ele('#prompt-textarea').input('\n')
-                    wait_start = time.time()
-                time.sleep(poll_interval)
-
-            # Retry model detection indefinitely until we get a valid result
-            model_slug = None
-            retry = 0
-            while True:
-                # Enable debug mode every 5th attempt
-                debug = (retry > 0 and retry % 5 == 0)
-                model_slug = detect_model_info_from_html(final_response_html, debug=debug)
-
-                retry_msg = f" (attempt {retry + 1})" if retry > 0 else ""
-                print(f">> Model detected{retry_msg}: {model_slug or 'unknown'}")
-
-                # If we got a model slug, validate it
-                if model_slug:
-                    if is_expected_model(model_slug):
-                        break  # Valid model detected, proceed
-
-                    # Wrong model / downgrade — pause and re-send instead of aborting
-                    is_downgrade = model_slug in DOWNGRADE_SLUGS
-                    tag = "DOWNGRADE" if is_downgrade else "WRONG MODEL"
-                    pause_secs = 7200
-                    print(f">> {tag}: got '{model_slug}' on query {q_id}. "
-                          f"Pausing {pause_secs}s then re-sending...")
-                    time.sleep(pause_secs)
-                    page.get("https://chatgpt.com/")
-                    time.sleep(5)
-                    ensure_new_chat(page, attempts=3,
-                                   temporary_chat=(exp_type == "temporary" and exp_name != "json_queries"))
-                    if interface_model:
-                        select_interface_model(page, interface_model)
-                    if not page.ele('#prompt-textarea', timeout=10):
-                        page.refresh()
-                        time.sleep(5)
-                    _check_unusual_activity(page)
-                    if fast_mode or is_mcq:
-                        paste_prompt(page, '#prompt-textarea', q_text)
-                    else:
-                        human_type(page, '#prompt-textarea', q_text) or paste_prompt(page, '#prompt-textarea', q_text)
-                    send_btn_retry = page.ele('button[data-testid="send-button"]', timeout=2)
-                    if send_btn_retry:
-                        time.sleep(random.uniform(0.15, 0.6))
-                        send_btn_retry.click()
-                    else:
-                        time.sleep(random.uniform(0.15, 0.6))
-                        page.ele('#prompt-textarea').input('\n')
-                    # Wait for the new response
-                    downgrade_wait_start = time.time()
-                    while True:
-                        if 'start voice' in page.html.lower():
-                            final_response_html = page.html
-                            break
-                        if time.time() - downgrade_wait_start > wait_timeout:
-                            print(f">> Re-send timed out after {wait_timeout}s. Refreshing...")
-                            page.refresh()
-                            time.sleep(5)
-                            downgrade_wait_start = time.time()
-                        time.sleep(poll_interval)
-                    retry = 0
-                    continue
-
-                # Model detection failed (None/unknown) - keep retrying
-                retry += 1
-                wait_time = min(2 + retry * 0.5, 10)  # Gradual backoff, max 10s
-                print(f">> Model detection failed, waiting {wait_time:.1f}s and refreshing page...")
-                time.sleep(wait_time)
+            if not page.ele('#prompt-textarea', timeout=5):
+                print(">> Input box still missing. Refreshing...")
                 page.refresh()
-                time.sleep(20)
-                final_response_html = page.html
+                time.sleep(5)
 
-            # Check if the response page contains the unusual-activity block
-            if UNUSUAL_ACTIVITY_TEXT in (final_response_html or "").lower():
-                raise UnusualActivityError(
-                    f"Unusual activity detected on query {q_id} — aborting session."
-                )
+            # Check for unusual-activity block before attempting each query
+            _check_unusual_activity(page)
 
             is_mcq = item.get("is_mcq")
-            q_id_str = str(q_id or "").lower()
-            skip_save = False
-            if save_mcq_only:
-                # Persona mode: only persist MCQ responses; non-MCQ queries
-                # still run (to build chat context) but HTML is not saved.
-                if is_mcq is False:
-                    skip_save = True
-                elif is_mcq is None and "_mcq" not in q_id_str:
-                    skip_save = True
-            if skip_save:
-                print(">> Skipping save (non-MCQ JSON query).")
+            if is_mcq is None:
+                is_mcq = "_mcq" in str(q_id or "").lower()
+
+            # 2. Type Prompt
+            print(f">> Sending: {q_preview[:50]}...")
+            if fast_mode or is_mcq:
+                if not paste_prompt(page, '#prompt-textarea', q_text):
+                    print(">> Failed to paste prompt.")
+                    skip_query = True
             else:
-                save_response(
-                    output_dir,
-                    q_id,
-                    final_response_html,
-                    0,
-                    model_info={"model_slug": model_slug} if model_slug else {},
-                    sent_at=sent_at,
-                )
-            _maybe_scroll(page)
-        else:
-            print(">> Skipping send/wait/save due to earlier failure.")
+                _think_delay(q_text)
+                if not human_type(page, '#prompt-textarea', q_text):
+                    if not paste_prompt(page, '#prompt-textarea', q_text):
+                        print(">> Failed to type or paste prompt.")
+                        skip_query = True
+
+            # 3. Click Send
+            send_btn = page.ele('button[data-testid="send-button"]', timeout=2)
+            sent_at = None
+            if not skip_query:
+                sent_at = datetime.now().isoformat()
+                if send_btn:
+                    time.sleep(random.uniform(0.15, 0.6))
+                    send_btn.click()
+                else:
+                    time.sleep(random.uniform(0.15, 0.6))
+                    page.ele('#prompt-textarea').input('\n')
+
+            if not skip_query:
+                # 4. Wait for Response
+                print(">> Waiting for response generation...")
+                final_response_html = None
+
+                # We monitor text stability and completion buttons
+                print(">> Monitoring generation...")
+                poll_interval = 0.2
+                wait_timeout = 600  # 10 minutes hard timeout (re-send query)
+                soft_refresh_timeout = 90  # seconds before a soft page refresh (no re-send)
+                soft_refreshed = False
+                wait_start = time.time()
+
+                while True:
+                    try:
+                        _html = page.html or ""
+                    except Exception as _html_err:
+                        print(f">> page.html error: {_html_err}; retrying...")
+                        time.sleep(2)
+                        continue
+                    voice_visible = 'start voice' in _html.lower()
+                    if voice_visible:
+                        final_response_html = _html
+                        break
+                    elapsed = time.time() - wait_start
+                    # Soft refresh: unstick a stalled render without re-sending the query
+                    if not soft_refreshed and elapsed > soft_refresh_timeout:
+                        print(f">> No response after {soft_refresh_timeout}s — soft-refreshing page to unstick...")
+                        page.refresh()
+                        time.sleep(5)
+                        soft_refreshed = True
+                    if elapsed > wait_timeout:
+                        print(f">> Response timed out after {wait_timeout}s. Refreshing page and re-sending query...")
+                        page.refresh()
+                        time.sleep(5)
+                        if not page.ele('#prompt-textarea', timeout=10):
+                            print(">> Input box not found after refresh. Retrying...")
+                            page.refresh()
+                            time.sleep(5)
+                        _check_unusual_activity(page)
+                        if fast_mode or is_mcq:
+                            paste_prompt(page, '#prompt-textarea', q_text)
+                        else:
+                            human_type(page, '#prompt-textarea', q_text) or paste_prompt(page, '#prompt-textarea', q_text)
+                        send_btn = page.ele('button[data-testid="send-button"]', timeout=2)
+                        if send_btn:
+                            time.sleep(random.uniform(0.15, 0.6))
+                            send_btn.click()
+                        else:
+                            time.sleep(random.uniform(0.15, 0.6))
+                            page.ele('#prompt-textarea').input('\n')
+                        wait_start = time.time()
+                    time.sleep(poll_interval)
+
+                # Retry model detection indefinitely until we get a valid result
+                model_slug = None
+                retry = 0
+                while True:
+                    # Enable debug mode every 5th attempt
+                    debug = (retry > 0 and retry % 5 == 0)
+                    model_slug = detect_model_info_from_html(final_response_html, debug=debug)
+
+                    retry_msg = f" (attempt {retry + 1})" if retry > 0 else ""
+                    print(f">> Model detected{retry_msg}: {model_slug or 'unknown'}")
+
+                    # If we got a model slug, validate it
+                    if model_slug:
+                        if is_expected_model(model_slug):
+                            break  # Valid model detected, proceed
+
+                        # Wrong model / downgrade — pause and re-send instead of aborting
+                        is_downgrade = model_slug in DOWNGRADE_SLUGS
+                        tag = "DOWNGRADE" if is_downgrade else "WRONG MODEL"
+                        pause_secs = 7200
+                        print(f">> {tag}: got '{model_slug}' on query {q_id}. "
+                              f"Pausing {pause_secs}s then re-sending...")
+                        pause_end = time.time() + pause_secs
+                        while time.time() < pause_end:
+                            if stop_event and stop_event.is_set():
+                                print(">> Stop signal received during downgrade pause. Halting.")
+                                return
+                            time.sleep(5)
+                        page.get("https://chatgpt.com/")
+                        time.sleep(5)
+                        ensure_new_chat(page, attempts=3,
+                                       temporary_chat=(exp_type == "temporary" and exp_name != "json_queries"))
+                        if interface_model:
+                            select_interface_model(page, interface_model)
+                        if not page.ele('#prompt-textarea', timeout=10):
+                            page.refresh()
+                            time.sleep(5)
+                        _check_unusual_activity(page)
+                        if fast_mode or is_mcq:
+                            paste_prompt(page, '#prompt-textarea', q_text)
+                        else:
+                            human_type(page, '#prompt-textarea', q_text) or paste_prompt(page, '#prompt-textarea', q_text)
+                        send_btn_retry = page.ele('button[data-testid="send-button"]', timeout=2)
+                        if send_btn_retry:
+                            time.sleep(random.uniform(0.15, 0.6))
+                            send_btn_retry.click()
+                        else:
+                            time.sleep(random.uniform(0.15, 0.6))
+                            page.ele('#prompt-textarea').input('\n')
+                        # Wait for the new response
+                        downgrade_wait_start = time.time()
+                        while True:
+                            try:
+                                _dhtml = page.html or ""
+                            except Exception:
+                                time.sleep(2)
+                                continue
+                            if 'start voice' in _dhtml.lower():
+                                final_response_html = _dhtml
+                                break
+                            if time.time() - downgrade_wait_start > wait_timeout:
+                                print(f">> Re-send timed out after {wait_timeout}s. Refreshing...")
+                                page.refresh()
+                                time.sleep(5)
+                                downgrade_wait_start = time.time()
+                            time.sleep(poll_interval)
+                        retry = 0
+                        continue
+
+                    # Model detection failed (None/unknown) - keep retrying
+                    retry += 1
+                    if retry >= 10:
+                        print(f">> Model detection failed after {retry} attempts — saving with unknown model.")
+                        break
+                    wait_time = min(2 + retry * 0.5, 10)  # Gradual backoff, max 10s
+                    print(f">> Model detection failed, waiting {wait_time:.1f}s and refreshing page...")
+                    time.sleep(wait_time)
+                    page.refresh()
+                    time.sleep(20)
+                    final_response_html = page.html
+
+                # Check if the response page contains the unusual-activity block
+                if UNUSUAL_ACTIVITY_TEXT in (final_response_html or "").lower():
+                    raise UnusualActivityError(
+                        f"Unusual activity detected on query {q_id} — aborting session."
+                    )
+
+                is_mcq = item.get("is_mcq")
+                q_id_str = str(q_id or "").lower()
+                skip_save = False
+                if save_mcq_only:
+                    # Persona mode: only persist MCQ responses; non-MCQ queries
+                    # still run (to build chat context) but HTML is not saved.
+                    if is_mcq is False:
+                        skip_save = True
+                    elif is_mcq is None and "_mcq" not in q_id_str:
+                        skip_save = True
+                if skip_save:
+                    print(">> Skipping save (non-MCQ JSON query).")
+                else:
+                    save_response(
+                        output_dir,
+                        q_id,
+                        final_response_html,
+                        0,
+                        model_info={"model_slug": model_slug} if model_slug else {},
+                        sent_at=sent_at,
+                    )
+                _maybe_scroll(page)
+            else:
+                print(">> Skipping send/wait/save due to earlier failure.")
+
+        except UnusualActivityError:
+            raise  # always propagate — this blocks the whole session
+        except Exception as _query_err:
+            import traceback
+            print(f"\n>> !! Query {q_id} failed with unexpected error: {_query_err}")
+            traceback.print_exc()
+            print(">> Continuing to next query.")
 
         # Inter-query wait
         if True:
@@ -2332,7 +2365,7 @@ def run_audit(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('config', nargs='?', default='exp.yaml', help='Path to experiments yaml')
+    parser.add_argument('config', nargs='?', default='yamls/exp_chatgpt.yaml', help='Path to experiments yaml')
     parser.add_argument('--configs', type=str, default=None, help='Comma-separated list of configs (one per session)')
     parser.add_argument('--start-in', type=float, default=0, help='Delay start by N minutes')
     parser.add_argument('--sessions', type=int, default=None, help='Override number of concurrent browser sessions')

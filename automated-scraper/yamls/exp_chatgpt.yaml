@@ -1,5 +1,5 @@
 defaults:
-  query_file: ../experiments/sorrybench/queries/queries.csv
+  query_file: ../experiments/hle/queries/queries.csv
   runs: 1
   shuffle: false
   fast: true
@@ -26,7 +26,3 @@ experiments:
   - name: instant-control
     type: non-temporary
     interface_model: instant
-
-  - name: thinking-control
-    type: non-temporary
-    interface_model: thinking

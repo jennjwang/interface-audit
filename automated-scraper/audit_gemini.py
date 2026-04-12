@@ -977,6 +977,10 @@ def run_experiment(
                 return
 
             attempt += 1
+            if attempt > 5:
+                print(f">> Max attempts (5) reached for {q_id} — skipping.")
+                query_complete = True
+                break
             if attempt > 1:
                 print(f">> Re-running {q_id} (attempt {attempt})...")
 
@@ -1019,151 +1023,167 @@ def run_experiment(
                     print(f">> Barrier wait failed ({e}). Proceeding.")
                 barrier_reached = True
 
-            sent_at = None
-            if not skip_query:
-                # Confirm text is in the editor before sending
-                try:
-                    content_check = prompt_input.run_js("return this.innerText || this.textContent || '';") or ""
-                    print(f">> Editor content check: {repr(content_check[:80])}")
-                except Exception:
-                    content_check = "unknown"
+            # Skip if already saved — allows resuming an interrupted run
+            _sid = "".join(c for c in str(q_id or "") if c.isalnum() or c in ("-", "_")).strip()
+            if (output_dir / f"{_sid}.html").exists():
+                print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
+                query_complete = True
+                break
 
-                sent_at = datetime.now().isoformat()
-                _click_send(page, prompt_input)
+            try:
+                sent_at = None
+                if not skip_query:
+                    # Confirm text is in the editor before sending
+                    try:
+                        content_check = prompt_input.run_js("return this.innerText || this.textContent || '';") or ""
+                        print(f">> Editor content check: {repr(content_check[:80])}")
+                    except Exception:
+                        content_check = "unknown"
 
-            if not skip_query:
-                print(">> Waiting for response...")
-                wait_start = time.time()
-                wait_timeout = 600
-                soft_refresh_timeout = 90
-                soft_refreshed = False
-                poll_interval = 0.5
+                    sent_at = datetime.now().isoformat()
+                    _click_send(page, prompt_input)
 
-                # Wait for stop button to appear (Gemini started generating)
-                print(">> Waiting for generation to start...")
-                for _ in range(60):  # up to 30s
-                    html = page.html or ""
-                    if _pause_on_error_13(html):
-                        wait_start = time.time()
-                        soft_refreshed = False
-                        try:
-                            page.refresh()
-                            time.sleep(5)
-                        except Exception:
-                            pass
-                        continue
-                    if 'aria-label="Stop response"' in html:
-                        print(">> Generation started.")
-                        break
-                    time.sleep(0.5)
-                else:
-                    print(">> Stop button never appeared — may have completed instantly.")
+                if not skip_query:
+                    print(">> Waiting for response...")
+                    wait_start = time.time()
+                    wait_timeout = 600
+                    soft_refresh_timeout = 90
+                    soft_refreshed = False
+                    poll_interval = 0.5
 
-                while True:
-                    html = page.html or ""
-                    if _pause_on_error_13(html):
-                        wait_start = time.time()
-                        soft_refreshed = False
-                        try:
-                            page.refresh()
-                            time.sleep(5)
-                        except Exception:
-                            pass
-                        continue
-                    # Still generating if stop button present
-                    if 'aria-label="Stop response"' in html:
-                        pass  # still going
-                    elif _response_is_complete(page):
-                        print(">> Response complete.")
-                        break
-                    elapsed = time.time() - wait_start
-                    if not soft_refreshed and elapsed > soft_refresh_timeout:
-                        print(f">> No response after {soft_refresh_timeout}s — soft-refreshing...")
-                        page.refresh()
-                        time.sleep(5)
-                        soft_refreshed = True
-                        prompt_input = _find_prompt_input(page, timeout=8)
-                        if prompt_input:
+                    # Wait for stop button to appear (Gemini started generating)
+                    print(">> Waiting for generation to start...")
+                    for _ in range(60):  # up to 30s
+                        html = page.html or ""
+                        if _pause_on_error_13(html):
+                            wait_start = time.time()
+                            soft_refreshed = False
                             try:
-                                refreshed_content = prompt_input.run_js(
-                                    "return this.innerText || this.textContent || '';"
-                                ) or ""
+                                page.refresh()
+                                time.sleep(5)
                             except Exception:
-                                refreshed_content = ""
-                            normalized_prompt = " ".join((q_text or "").split())
-                            normalized_content = " ".join(refreshed_content.split())
-                            if normalized_prompt and normalized_prompt not in normalized_content:
-                                print(">> Soft refresh cleared prompt; re-entering and re-sending...")
-                                retyped = paste_prompt(page, prompt_input, q_text) or \
-                                    human_type(
-                                        page,
-                                        prompt_input,
-                                        q_text,
-                                        allow_typos=not (fast_mode or is_mcq),
-                                    )
-                                if retyped and _click_send(page, prompt_input):
-                                    sent_at = datetime.now().isoformat()
-                                elif not retyped:
-                                    print(">> Failed to re-enter prompt after soft refresh.")
+                                pass
+                            continue
+                        if 'aria-label="Stop response"' in html:
+                            print(">> Generation started.")
+                            break
+                        time.sleep(0.5)
+                    else:
+                        print(">> Stop button never appeared — may have completed instantly.")
+
+                    while True:
+                        html = page.html or ""
+                        if _pause_on_error_13(html):
+                            wait_start = time.time()
+                            soft_refreshed = False
+                            try:
+                                page.refresh()
+                                time.sleep(5)
+                            except Exception:
+                                pass
+                            continue
+                        # Still generating if stop button present
+                        if 'aria-label="Stop response"' in html:
+                            pass  # still going
+                        elif _response_is_complete(page):
+                            print(">> Response complete.")
+                            break
+                        elapsed = time.time() - wait_start
+                        if not soft_refreshed and elapsed > soft_refresh_timeout:
+                            print(f">> No response after {soft_refresh_timeout}s — soft-refreshing...")
+                            page.refresh()
+                            time.sleep(5)
+                            soft_refreshed = True
+                            prompt_input = _find_prompt_input(page, timeout=8)
+                            if prompt_input:
+                                try:
+                                    refreshed_content = prompt_input.run_js(
+                                        "return this.innerText || this.textContent || '';"
+                                    ) or ""
+                                except Exception:
+                                    refreshed_content = ""
+                                normalized_prompt = " ".join((q_text or "").split())
+                                normalized_content = " ".join(refreshed_content.split())
+                                if normalized_prompt and normalized_prompt not in normalized_content:
+                                    print(">> Soft refresh cleared prompt; re-entering and re-sending...")
+                                    retyped = paste_prompt(page, prompt_input, q_text) or \
+                                        human_type(
+                                            page,
+                                            prompt_input,
+                                            q_text,
+                                            allow_typos=not (fast_mode or is_mcq),
+                                        )
+                                    if retyped and _click_send(page, prompt_input):
+                                        sent_at = datetime.now().isoformat()
+                                    elif not retyped:
+                                        print(">> Failed to re-enter prompt after soft refresh.")
+                                else:
+                                    print(">> Prompt still present after soft refresh.")
                             else:
-                                print(">> Prompt still present after soft refresh.")
-                        else:
-                            print(">> Prompt input not found after soft refresh; waiting for timeout retry.")
-                    if elapsed > wait_timeout:
-                        print(f">> Timed out after {wait_timeout}s. Re-sending...")
-                        ensure_new_chat(page)
-                        if interface_model:
-                            select_interface_model(page, interface_model)
-                        prompt_input = _find_prompt_input(page)
-                        if prompt_input:
-                            paste_prompt(page, prompt_input, q_text) or \
-                                human_type(page, prompt_input, q_text, allow_typos=not (fast_mode or is_mcq))
-                            _click_send(page, prompt_input)
-                        wait_start = time.time()
-                    time.sleep(poll_interval)
+                                print(">> Prompt input not found after soft refresh; waiting for timeout retry.")
+                        if elapsed > wait_timeout:
+                            print(f">> Timed out after {wait_timeout}s. Re-sending...")
+                            ensure_new_chat(page)
+                            if interface_model:
+                                select_interface_model(page, interface_model)
+                            prompt_input = _find_prompt_input(page)
+                            if prompt_input:
+                                paste_prompt(page, prompt_input, q_text) or \
+                                    human_type(page, prompt_input, q_text, allow_typos=not (fast_mode or is_mcq))
+                                _click_send(page, prompt_input)
+                            wait_start = time.time()
+                        time.sleep(poll_interval)
 
-                final_html = page.html
-                model_slug = detect_model_from_html(final_html)
-                print(f">> Model detected: {model_slug or 'unknown'}")
+                    final_html = page.html
+                    model_slug = detect_model_from_html(final_html)
+                    print(f">> Model detected: {model_slug or 'unknown'}")
 
-                if (
-                    interface_model
-                    and "thinking" in str(interface_model).lower()
-                    and "fast" in str(model_slug or "").lower()
-                ):
-                    print(
-                        f">> Expected Thinking model but got '{model_slug}'. "
-                        f"Waiting {THINKING_FAST_RETRY_SECONDS // 60} minutes, then retrying same query."
-                    )
-                    if stop_event and stop_event.is_set():
-                        print(">> Stop signal received during retry wait. Halting.")
-                        return
-                    time.sleep(THINKING_FAST_RETRY_SECONDS)
-                    continue
+                    if (
+                        interface_model
+                        and "thinking" in str(interface_model).lower()
+                        and "fast" in str(model_slug or "").lower()
+                    ):
+                        print(
+                            f">> Expected Thinking model but got '{model_slug}'. "
+                            f"Waiting {THINKING_FAST_RETRY_SECONDS // 60} minutes, then retrying same query."
+                        )
+                        pause_end = time.time() + THINKING_FAST_RETRY_SECONDS
+                        while time.time() < pause_end:
+                            if stop_event and stop_event.is_set():
+                                print(">> Stop signal received during retry wait. Halting.")
+                                return
+                            time.sleep(5)
+                        continue
 
-                skip_save = False
-                if save_mcq_only:
-                    is_mcq_item = item.get("is_mcq")
-                    if is_mcq_item is False:
-                        skip_save = True
-                    elif is_mcq_item is None and "_mcq" not in str(q_id or "").lower():
-                        skip_save = True
+                    skip_save = False
+                    if save_mcq_only:
+                        is_mcq_item = item.get("is_mcq")
+                        if is_mcq_item is False:
+                            skip_save = True
+                        elif is_mcq_item is None and "_mcq" not in str(q_id or "").lower():
+                            skip_save = True
 
-                if skip_save:
-                    print(">> Skipping save (non-MCQ).")
+                    if skip_save:
+                        print(">> Skipping save (non-MCQ).")
+                    else:
+                        save_response(
+                            output_dir,
+                            q_id,
+                            final_html,
+                            model_info={"model_slug": model_slug} if model_slug else {},
+                            sent_at=sent_at,
+                        )
+                    _maybe_scroll(page)
                 else:
-                    save_response(
-                        output_dir,
-                        q_id,
-                        final_html,
-                        model_info={"model_slug": model_slug} if model_slug else {},
-                        sent_at=sent_at,
-                    )
-                _maybe_scroll(page)
-            else:
-                print(">> Skipping send/wait/save due to earlier failure.")
+                    print(">> Skipping send/wait/save due to earlier failure.")
 
-            query_complete = True
+                query_complete = True
+
+            except Exception as _attempt_err:
+                import traceback
+                print(f"\n>> !! Query {q_id} attempt {attempt} failed: {_attempt_err}")
+                traceback.print_exc()
+                print(f">> Will retry (attempt {attempt}/5).")
 
         # Inter-query wait
         if isinstance(wait_after_saves, list) and len(wait_after_saves) == 2:
@@ -1455,7 +1475,7 @@ def run_audit(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Browser scraper for gemini.google.com (mirrors audit_claude.py)")
-    parser.add_argument("config", nargs="?", default="exp_gemini.yaml",
+    parser.add_argument("config", nargs="?", default="yamls/exp_gemini.yaml",
                         help="Path to experiments YAML")
     parser.add_argument("--configs", type=str, default=None,
                         help="Comma-separated list of configs (one per session)")

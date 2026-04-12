@@ -1,6 +1,7 @@
 defaults:
+  query_file: ../experiments/hle/queries/queries.csv
   rotate_query_files:
-    - ../experiments/sorrybench/queries/queries.csv
+    - ../experiments/hle/queries/queries.csv
   runs: 1
   shuffle: false
   fast: true

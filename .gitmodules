@@ -1,6 +1,3 @@
-[submodule "automated-scraper"]
-	path = automated-scraper
-	url = https://github.com/jennjwang/automated-scraper.git
 [submodule "experiments/elephant"]
 	path = experiments/elephant
 	url = https://github.com/myracheng/elephant.git

@@ -113,11 +113,23 @@ def run_api_query(
                 )
             config_kwargs.update(api_params)
 
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config=genai_types.GenerateContentConfig(**config_kwargs) if config_kwargs else None,
-            )
+            for attempt in range(5):
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                        config=genai_types.GenerateContentConfig(**config_kwargs) if config_kwargs else None,
+                    )
+                    break
+                except Exception as retry_exc:
+                    if "503" in str(retry_exc) or "UNAVAILABLE" in str(retry_exc):
+                        wait = 10 * (2 ** attempt)
+                        print(f">> Gemini 503, retrying in {wait}s (attempt {attempt+1}/5)...")
+                        time.sleep(wait)
+                        if attempt == 4:
+                            raise
+                    else:
+                        raise
 
             content = response.text or ""
             record.update({
@@ -193,6 +205,10 @@ def run_api_query(
             from openai import OpenAI
 
             client = OpenAI(api_key=key)
+            # Reasoning models (o-series / gpt-5.4) require max_completion_tokens
+            # instead of max_tokens when reasoning_effort is set.
+            if "reasoning_effort" in api_params and "max_tokens" in api_params:
+                api_params["max_completion_tokens"] = api_params.pop("max_tokens")
             response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],

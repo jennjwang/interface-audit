@@ -10,3 +10,6 @@ archive/
 *.pyzwz
 .DS_Store
 .gitattributes
+
+data/
+experiments/
