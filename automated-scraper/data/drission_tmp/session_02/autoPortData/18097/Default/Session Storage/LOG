@@ -1,5 +1,0 @@
-2026/04/03-08:26:40.442 986112 Creating DB /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_02/autoPortData/18097/Default/Session Storage since it was missing.
-2026/04/03-08:26:40.452 986112 Reusing MANIFEST /Users/jenniferwang/PhD/personalization/automated-scraper/data/drission_tmp/session_02/autoPortData/18097/Default/Session Storage/MANIFEST-000001
-2026/04/03-09:26:41.443 98610d Level-0 table #5: started
-2026/04/03-09:26:41.447 98610d Level-0 table #5: 10269 bytes OK
-2026/04/03-09:26:41.450 98610d Delete type=0 #3
