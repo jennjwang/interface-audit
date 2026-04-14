@@ -1,0 +1,87 @@
+[2026-04-11T21:27:03.297338] >> Logging to /home/jenn/automated-scraper/automated-scraper/data/logs/2026-04-11_21-27-03/combined.log
+[2026-04-11T21:27:03.309056] >> Logging to /home/jenn/automated-scraper/automated-scraper/data/logs/2026-04-11_21-27-03/combined.log
+[2026-04-11T21:27:03.320760] >> Logging to /home/jenn/automated-scraper/automated-scraper/data/logs/2026-04-11_21-27-03/combined.log
+[2026-04-11T21:27:12.970256] >> Navigating to ChatGPT...
+[2026-04-11T21:27:14.181443] >> Navigating to ChatGPT...
+[2026-04-11T21:27:18.281342] >> Navigating to ChatGPT...
+[2026-04-11T21:27:42.028070] >> Initiating Login Sequence...
+[2026-04-11T21:27:42.773229] >> Initiating Login Sequence...
+[2026-04-11T21:27:43.422889] >> Clicking 'Log in'...
+[2026-04-11T21:27:43.968669] >> Clicking 'Log in'...
+[2026-04-11T21:27:53.145093] >> Initiating Login Sequence...
+[2026-04-11T21:27:57.721169] >> Clicking 'Log in'...
+[2026-04-11T21:28:00.199771] >> Looking for Google button...
+[2026-04-11T21:28:00.480047] >> Looking for Google button...
+[2026-04-11T21:28:03.549334] >> Looking for Google button...
+[2026-04-11T21:28:03.902349] >> Clicking Google Button...
+[2026-04-11T21:28:05.576582] 
+[2026-04-11T21:28:05.576613] ==================================================
+[2026-04-11T21:28:05.579217] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-11T21:28:05.637029] >> I have clicked 'Continue with Google'.
+[2026-04-11T21:28:05.648650] >> Please select your account or type credentials in the browser.
+[2026-04-11T21:28:05.648834] ==================================================
+[2026-04-11T21:28:05.648868] 
+[2026-04-11T21:28:05.648899] >> Waiting for successful login...
+[2026-04-11T21:28:06.093279] >> Clicking Google Button...
+[2026-04-11T21:28:06.472549] >> Waiting... (120s). Please log in manually.
+[2026-04-11T21:28:07.572353] >> Google button not found or already in a flow. Please log in manually if needed.
+[2026-04-11T21:28:07.575325] >> Waiting for successful login...
+[2026-04-11T21:28:08.263542] 
+[2026-04-11T21:28:08.263573] ==================================================
+[2026-04-11T21:28:08.263715] >> PLEASE LOG IN MANUALLY NOW
+[2026-04-11T21:28:08.263924] >> I have clicked 'Continue with Google'.
+[2026-04-11T21:28:08.264014] >> Please select your account or type credentials in the browser.
+[2026-04-11T21:28:08.264439] ==================================================
+[2026-04-11T21:28:08.266715] 
+[2026-04-11T21:28:08.312381] >> Waiting for successful login...
+[2026-04-11T21:28:09.045397] >> Waiting... (120s). Please log in manually.
+[2026-04-11T21:28:14.744477] >> Login attempt 1/5 crashed: 
+[2026-04-11T21:28:14.744508] The element object is invalid. This may be an overall refresh of the page, or a partial js refresh to replace or remove elements.
+[2026-04-11T21:28:14.744516] Version: 4.1.1.2
+[2026-04-11T21:28:14.746935] >> Login attempt 1/5 failed. Refreshing and retrying in 30s...
+[2026-04-11T21:28:21.450511] >> Waiting... (115s). Please log in manually.
+[2026-04-11T21:28:31.196579] >> Waiting... (110s). Please log in manually.
+[2026-04-11T21:28:39.825870] >> Waiting... (105s). Please log in manually.
+[2026-04-11T21:28:47.359499] >> Waiting... (115s). Please log in manually.
+[2026-04-11T21:28:50.673310] >> Waiting... (100s). Please log in manually.
+[2026-04-11T21:28:56.315963] >> Initiating Login Sequence...
+[2026-04-11T21:28:56.404056] >> Clicking 'Log in'...
+[2026-04-11T21:29:02.804018] >> Waiting... (95s). Please log in manually.
+[2026-04-11T21:29:02.995605] >> Looking for Google button...
+[2026-04-11T21:29:07.411198] >> Waiting... (110s). Please log in manually.
+[2026-04-11T21:29:10.249089] >> Google button not found or already in a flow. Please log in manually if needed.
+[2026-04-11T21:29:10.255640] >> Waiting for successful login...
+[2026-04-11T21:29:10.665401] >> Waiting... (120s). Please log in manually.
+[2026-04-11T21:29:11.797229] >> Waiting... (90s). Please log in manually.
+[2026-04-11T21:29:18.535830] >> Waiting... (115s). Please log in manually.
+[2026-04-11T21:29:19.691003] >> Waiting... (85s). Please log in manually.
+[2026-04-11T21:29:25.150826] >> Waiting... (105s). Please log in manually.
+[2026-04-11T21:29:27.441324] >> Waiting... (110s). Please log in manually.
+[2026-04-11T21:29:39.735878] >> Waiting... (105s). Please log in manually.
+[2026-04-11T21:29:40.647054] >> Waiting... (80s). Please log in manually.
+[2026-04-11T21:29:50.396253] >> Waiting... (100s). Please log in manually.
+[2026-04-11T21:29:52.472295] >> Waiting... (100s). Please log in manually.
+[2026-04-11T21:29:59.619524] >> Waiting... (95s). Please log in manually.
+[2026-04-11T21:30:00.430694] >> Waiting... (75s). Please log in manually.
+[2026-04-11T21:30:08.181314] >> Waiting... (90s). Please log in manually.
+[2026-04-11T21:30:10.107231] >> Waiting... (95s). Please log in manually.
+[2026-04-11T21:30:16.264732] >> Waiting... (85s). Please log in manually.
+[2026-04-11T21:30:18.098735] >> Waiting... (70s). Please log in manually.
+[2026-04-11T21:30:25.232261] >> Waiting... (80s). Please log in manually.
+[2026-04-11T21:30:31.455299] >> Waiting... (90s). Please log in manually.
+[2026-04-11T21:30:33.921083] >> Waiting... (75s). Please log in manually.
+[2026-04-11T21:30:35.168241] >> Waiting... (65s). Please log in manually.
+[2026-04-11T21:30:41.503627] >> Waiting... (70s). Please log in manually.
+[2026-04-11T21:30:46.688553] >> Waiting... (85s). Please log in manually.
+[2026-04-11T21:30:49.138429] >> Waiting... (65s). Please log in manually.
+[2026-04-11T21:30:50.590647] >> Waiting... (60s). Please log in manually.
+[2026-04-11T21:30:57.462917] >> Waiting... (60s). Please log in manually.
+[2026-04-11T21:31:02.894492] >> Waiting... (80s). Please log in manually.
+[2026-04-11T21:31:05.537539] >> Waiting... (55s). Please log in manually.
+[2026-04-11T21:31:12.378419] >> Waiting... (55s). Please log in manually.
+[2026-04-11T21:31:20.845813] >> Waiting... (75s). Please log in manually.
+[2026-04-11T21:31:25.459512] >> Waiting... (50s). Please log in manually.
+[2026-04-11T21:31:30.425261] >> Waiting... (50s). Please log in manually.
+[2026-04-11T21:31:44.766920] >> Waiting... (45s). Please log in manually.
+[2026-04-11T21:31:48.298327] >> Waiting... (45s). Please log in manually.
+[2026-04-11T21:31:52.343156] >> Waiting... (70s). Please log in manually.

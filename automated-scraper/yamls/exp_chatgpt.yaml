@@ -1,5 +1,5 @@
 defaults:
-  query_file: ../experiments/hle/queries/queries.csv
+  query_file: /home/jenn/automated-scraper/experiments/metabench-truthfulQA/queries/queries.csv
   runs: 1
   shuffle: false
   fast: true

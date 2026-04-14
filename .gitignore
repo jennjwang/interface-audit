@@ -11,5 +11,10 @@ archive/
 .DS_Store
 .gitattributes
 
-data/
 experiments/
+*.lock
+*.json
+*.ready
+*.hyb
+*.egg-info
+data/
