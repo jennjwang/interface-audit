@@ -421,6 +421,9 @@ def load_queries_from_file(query_file):
     JSON items can optionally include 'reuse_chat' to control chat reuse per query.
     """
     queries = []
+    if not query_file:
+        print("Error: No query file specified.")
+        return []
     # Make path absolute if it's relative
     if not os.path.isabs(query_file):
         # assume relative to this script's folder

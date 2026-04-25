@@ -1,7 +1,6 @@
 defaults:
-  query_file: ../experiments/hle/queries/queries.csv
-  rotate_query_files:
-    - ../experiments/hle/queries/queries.csv
+  query_file: ../experiments/aa-omniscience/queries.csv
+  # query_file: ../experiments/bbq/queries.csv
   runs: 1
   shuffle: false
   fast: true
@@ -13,9 +12,12 @@ defaults:
 mode: sync
 
 api_models:
-  - model: claude-opus-4-6
+  - model: claude-opus-4-7
+    web_search: false
   - model: claude-sonnet-4-6
+    web_search: false
   - model: claude-haiku-4-5-20251001
+    web_search: false
 
 experiments:
   - name: haiku

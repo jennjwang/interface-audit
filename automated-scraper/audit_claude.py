@@ -13,7 +13,7 @@ Usage:
     python audit_claude.py exp_claude.yaml
     python audit_claude.py exp_claude.yaml --sessions 2
     python audit_claude.py exp_claude.yaml --clear-memory
-    python audit_claude.py exp_claude.yaml --interface-model claude-opus-4-6
+    python audit_claude.py exp_claude.yaml --interface-model claude-opus-4-7
 """
 from __future__ import annotations
 
@@ -171,6 +171,9 @@ def _detect_is_mcq(item):
 
 def load_queries_from_file(query_file):
     queries = []
+    if not query_file:
+        print("Error: No query file specified.")
+        return []
     if not os.path.isabs(query_file):
         query_file = BASE_DIR / query_file
     if not os.path.exists(query_file):
@@ -466,8 +469,8 @@ def handle_google_login(page, allow_manual=True):
 def _extract_model_family(name):
     """Extract core model family (opus/sonnet/haiku) from any model name format.
 
-    Handles: 'opus', 'sonnet', 'haiku', 'claude-opus-4-6', 'claude-sonnet-4-6',
-             'Opus 4.6', 'Sonnet 4.6', etc.
+    Handles: 'opus', 'sonnet', 'haiku', 'claude-opus-4-7', 'claude-sonnet-4-6',
+             'Opus 4.7', 'Sonnet 4.6', etc.
     """
     lower = name.lower().replace("-", " ").replace("_", " ")
     for family in ("opus", "sonnet", "haiku"):
@@ -481,7 +484,7 @@ def _model_matches(model_name, text):
     # Direct substring match
     if model_name.lower() in text.lower():
         return True
-    # Compare extracted family names (e.g. 'claude-opus-4-6' matches 'Opus 4.6')
+    # Compare extracted family names (e.g. 'claude-opus-4-7' matches 'Opus 4.7')
     return _extract_model_family(model_name) == _extract_model_family(text)
 
 
@@ -514,6 +517,7 @@ def select_interface_model(page, model_name, timeout=8):
         time.sleep(random.uniform(0.8, 1.5))
 
         menu_items = (
+            page.eles('@@role=menuitemradio', timeout=timeout) or
             page.eles('@@role=menuitem', timeout=timeout) or
             page.eles('css:div[role="menuitem"]', timeout=3) or
             page.eles('css:li[role="option"]', timeout=3)
@@ -1588,7 +1592,7 @@ if __name__ == "__main__":
                         help="Allow manual login prompts")
     parser.add_argument("--api-models", type=str, default=None,
                         help='Comma-separated Claude API models, e.g. '
-                             '"claude-opus-4-6,claude-sonnet-4-6:0.7". '
+                             '"claude-opus-4-7,claude-sonnet-4-6:0.7". '
                              'Param after colon is temperature (float) or '
                              'budget_tokens (int for extended thinking).')
     parser.add_argument("--clear-memory", action="store_true",

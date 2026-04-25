@@ -1,10 +1,12 @@
 defaults:
   # rotate_query_files:
+  #   - ../experiments/aa-omniscience/queries.csv
+  # - ../experiments/bbq/queries.csv
   # - ../experiments/metabench-gsm8k/queries/queries_from_229.csv
   # - ../experiments/metabench-truthfulQA/queries/queries_from_72.csv
   # - ../experiments/metabench-gsm8k/queries/queries_from_158.csv
   # query_file: ../experiments/metabench-gsm8k/queries/queries_from_229.csv
-  query_file: ../experiments/hle/queries/queries.csv
+  query_file: ../experiments/bbq/queries.csv
   runs: 1
   shuffle: false
   fast: true
@@ -18,8 +20,10 @@ mode: sync
 api_models:
   - model: gemini-3-flash-preview
     thinking_level: high
+    web_search: false
   - model: gemini-3-flash-preview
     thinking_level: low
+    web_search: false
   # - model: gemini-3.1-pro-preview
 
 experiments:
@@ -30,10 +34,6 @@ experiments:
   - name: thinking
     type: non-temporary
     interface_model: thinking
-
-  - name: fast-control
-    type: non-temporary
-    interface_model: fast
 
   # - name: pro
   #   type: non-temporary

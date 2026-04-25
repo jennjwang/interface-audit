@@ -81,6 +81,8 @@ def run_api_query(
     if sent_at:
         record["sent_at"] = sent_at
 
+    web_search: bool = bool(api_params.pop("web_search", False))
+
     if _is_gemini_model(model_name):
         # ── Google Gemini path ───────────────────────────────────────────────
         gemini_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
@@ -111,6 +113,10 @@ def run_api_query(
                 config_kwargs["thinking_config"] = genai_types.ThinkingConfig(
                     thinking_level=str(thinking_level)
                 )
+            if web_search:
+                config_kwargs["tools"] = [genai_types.Tool(
+                    google_search=genai_types.GoogleSearch()
+                )]
             config_kwargs.update(api_params)
 
             for attempt in range(5):
@@ -169,14 +175,29 @@ def run_api_query(
 
             create_kwargs.update(api_params)
 
-            message = client.messages.create(
-                model=model_name,
-                max_tokens=create_kwargs.pop("max_tokens", 8096),
-                messages=[{"role": "user", "content": prompt}],
-                **create_kwargs,
-            )
+            if web_search:
+                create_kwargs.setdefault("tools", [])
+                create_kwargs["tools"].append({
+                    "type": "web_search_20250305",
+                    "name": "web_search",
+                    "max_uses": 5,
+                })
+                message = client.beta.messages.create(
+                    model=model_name,
+                    max_tokens=create_kwargs.pop("max_tokens", 8096),
+                    messages=[{"role": "user", "content": prompt}],
+                    betas=["web-search-2025-03-05"],
+                    **create_kwargs,
+                )
+            else:
+                message = client.messages.create(
+                    model=model_name,
+                    max_tokens=create_kwargs.pop("max_tokens", 8096),
+                    messages=[{"role": "user", "content": prompt}],
+                    **create_kwargs,
+                )
 
-            # Concatenate all text blocks (thinking blocks are skipped)
+            # Concatenate all text blocks (thinking/tool blocks are skipped)
             content = "".join(
                 block.text for block in message.content
                 if getattr(block, "type", None) == "text"
@@ -205,24 +226,41 @@ def run_api_query(
             from openai import OpenAI
 
             client = OpenAI(api_key=key)
-            # Reasoning models (o-series / gpt-5.4) require max_completion_tokens
-            # instead of max_tokens when reasoning_effort is set.
-            if "reasoning_effort" in api_params and "max_tokens" in api_params:
-                api_params["max_completion_tokens"] = api_params.pop("max_tokens")
-            response = client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": prompt}],
-                **api_params,
-            )
-            content = response.choices[0].message.content or ""
-            record.update({
-                "response_text": content,
-                "response_id": getattr(response, "id", None),
-                "finish_reason": response.choices[0].finish_reason,
-                "created": getattr(response, "created", None),
-            })
-            if getattr(response, "usage", None):
-                record["usage"] = response.usage.to_dict()
+            if web_search:
+                # Responses API supports web_search_preview tool
+                response = client.responses.create(
+                    model=model_name,
+                    input=prompt,
+                    tools=[{"type": "web_search_preview"}],
+                    **api_params,
+                )
+                content = response.output_text or ""
+                record.update({
+                    "response_text": content,
+                    "response_id": getattr(response, "id", None),
+                    "finish_reason": getattr(response, "status", None),
+                })
+                if getattr(response, "usage", None):
+                    record["usage"] = response.usage.to_dict() if hasattr(response.usage, "to_dict") else vars(response.usage)
+            else:
+                # Reasoning models (o-series / gpt-5.4) require max_completion_tokens
+                # instead of max_tokens when reasoning_effort is set.
+                if "reasoning_effort" in api_params and "max_tokens" in api_params:
+                    api_params["max_completion_tokens"] = api_params.pop("max_tokens")
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[{"role": "user", "content": prompt}],
+                    **api_params,
+                )
+                content = response.choices[0].message.content or ""
+                record.update({
+                    "response_text": content,
+                    "response_id": getattr(response, "id", None),
+                    "finish_reason": response.choices[0].finish_reason,
+                    "created": getattr(response, "created", None),
+                })
+                if getattr(response, "usage", None):
+                    record["usage"] = response.usage.to_dict()
         except Exception as exc:
             record["error"] = str(exc)
 

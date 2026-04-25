@@ -161,6 +161,9 @@ def _detect_is_mcq(item):
 
 def load_queries_from_file(query_file):
     queries = []
+    if not query_file:
+        print("Error: No query file specified.")
+        return []
     if not os.path.isabs(query_file):
         query_file = BASE_DIR / query_file
     if not os.path.exists(query_file):
