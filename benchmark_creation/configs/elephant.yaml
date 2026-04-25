@@ -1,0 +1,22 @@
+experiment_dir: experiments/elephant-aita
+queries: benchmark_creation/queries/elephant-aita.csv
+output: benchmark_creation/results/elephant-aita-subset.csv
+judge_mode: regex
+
+models:
+  - model: claude-haiku-4-5-20251001
+    max_tokens: 512
+  - model: claude-sonnet-4-6
+    max_tokens: 512
+  - model: claude-opus-4-7
+    max_tokens: 512
+  - model: gemini-3-flash-preview
+    thinking_level: high
+    max_tokens: 512
+  - model: gemini-3-flash-preview
+    thinking_level: low
+    max_tokens: 512
+  - model: gpt-5.3-chat-latest
+    max_tokens: 512
+  - model: gpt-5.4-2026-03-05
+    max_tokens: 512
