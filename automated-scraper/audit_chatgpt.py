@@ -1710,6 +1710,7 @@ def _api_barrier_worker(
     api_cfg, api_key,
     output_base,
     sync_barrier_info, stop_event,
+    batch_size=0, pause_hours=3,
 ):
     """Standalone API worker that participates in the per-query sync barrier."""
     barrier = FileBasedBarrier(
@@ -1739,22 +1740,31 @@ def _api_barrier_worker(
         queries = shuffle_no_consecutive(queries, seed=seed)
 
     print(f">> [API {m_name}] Starting barrier worker with {len(queries)} queries.")
+    queries_done = 0
 
     for i, item in enumerate(queries):
         if stop_event and stop_event.is_set():
             print(f">> [API {m_name}] Stop signal received. Halting.")
             return
 
-        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier 1...")
-        barrier.wait()
-
-        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier 2 (send barrier)...")
+        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at send barrier...")
         barrier.wait()
 
         sent_at = datetime.now().isoformat()
         print(f">> [API {m_name}] Sending {item['id']}...")
         run_api_query(item["id"], item["query"], str(output_dir), m_name,
                       sent_at=sent_at, api_key=api_key, **m_params)
+
+        queries_done += 1
+        if batch_size > 0 and queries_done % batch_size == 0:
+            pause_secs = pause_hours * 3600
+            print(f">> [API {m_name}] Batch of {batch_size} done. Pausing {pause_hours:.1f}h...")
+            pause_end = time.time() + pause_secs
+            while time.time() < pause_end:
+                if stop_event and stop_event.is_set():
+                    return
+                time.sleep(30)
+            print(f">> [API {m_name}] Resuming after batch pause.")
 
     print(f">> [API {m_name}] All queries complete.")
 
@@ -1787,6 +1797,8 @@ def run_experiment(
     shuffle = bool(experiment.get("shuffle", defaults.get("shuffle", False)))
     exp_seed = experiment.get("seed", defaults.get("seed"))
     reuse_chat = bool(experiment.get("reuse_chat", defaults.get("reuse_chat", False)))
+    batch_size = int(experiment.get("batch_size", defaults.get("batch_size", 0)))
+    pause_hours = float(experiment.get("pause_hours", defaults.get("pause_hours", 3)))
     if seed_override is not None and "seed" not in experiment:
         exp_seed = seed_override
 
@@ -1850,6 +1862,7 @@ def run_experiment(
 
     # Process Queries
     prev_reuse = None
+    queries_done = 0
     for i, item in enumerate(queries):
         if stop_event and stop_event.is_set():
             print(">> Stop signal received. Halting.")
@@ -1860,15 +1873,6 @@ def run_experiment(
         item_reuse = item.get("reuse_chat")
         effective_reuse = reuse_chat if item_reuse is None else bool(item_reuse)
         q_preview = (q_text or "").replace("\n", " ")
-
-        # Cross-session barrier: all sessions synchronize at the top of each query
-        if sync_barrier:
-            print(f">> [session {session_id}] Waiting at query barrier {i}...")
-            try:
-                sync_barrier.wait()
-                print(f">> [session {session_id}] All sessions at query {i+1}. Proceeding.")
-            except Exception as e:
-                print(f">> Barrier wait failed ({e}) — proceeding anyway")
 
         # Skip if already saved — allows resuming an interrupted run
         _sid = "".join(c for c in str(q_id or "") if c.isalnum() or c in ("-", "_")).strip()
@@ -1921,7 +1925,7 @@ def run_experiment(
                 page.refresh()
                 time.sleep(5)
 
-            # Second barrier: wait for all sessions to finish model selection before sending
+            # Barrier: wait for all sessions to finish model selection before sending
             if sync_barrier:
                 print(f">> [session {session_id}] Waiting at send barrier {i}...")
                 try:
@@ -2151,6 +2155,21 @@ def run_experiment(
                     sleep_time += random.uniform(4, 12)
             print(f">> Waiting {sleep_time:.2f}s before next query...")
             time.sleep(sleep_time)
+
+        if not skip_query:
+            queries_done += 1
+            if batch_size > 0 and queries_done % batch_size == 0:
+                pause_secs = pause_hours * 3600
+                print(f"\n>> Batch of {batch_size} queries complete. Pausing {pause_hours:.1f}h ({pause_secs:.0f}s) before continuing...")
+                pause_end = time.time() + pause_secs
+                while time.time() < pause_end:
+                    if stop_event and stop_event.is_set():
+                        return
+                    remaining = pause_end - time.time()
+                    if int(remaining) % 600 == 0 and remaining > 0:
+                        print(f">> Batch pause: {remaining/3600:.1f}h remaining...")
+                    time.sleep(30)
+                print(f">> Resuming after batch pause.")
 
 def run_audit(
     config_path,
@@ -2490,6 +2509,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=None, help='Seed for deterministic shuffle (applies when shuffle=true)')
     parser.add_argument('--no-parse', action='store_true', help='Skip parsing saved HTML after experiments complete')
     parser.add_argument('--repeat-every-hours', type=float, default=0, help='Repeat full experiment every N hours (0 = run once)')
+    parser.add_argument('--num-runs', type=int, default=1, help='Number of full experiment passes to run (default: 1; combine with --repeat-every-hours to add a delay between passes)')
     parser.add_argument('--allow-manual-login', action='store_true', help='Allow manual login prompts when repeating runs')
     parser.add_argument('--api-models', type=str, default=None,
                         help='Comma-separated API models (overrides YAML api_models). '
@@ -2831,6 +2851,8 @@ if __name__ == "__main__":
                     "output_base": str(api_output_base),
                     "sync_barrier_info": api_bi,
                     "stop_event": stop_event,
+                    "batch_size": int(defaults_cfg.get("batch_size", 0)),
+                    "pause_hours": float(defaults_cfg.get("pause_hours", 3)),
                 })
                 p.start()
                 procs.append(p)
@@ -2849,7 +2871,8 @@ if __name__ == "__main__":
         if (not args.no_parse) and (not clear_only):
             parse_saved_htmls(run_id)
 
-    repeat_hours = float(args.repeat_every_hours or 0)
+    _top_defaults = _pre_config.get("defaults", {}) if isinstance(_pre_config, dict) else {}
+    repeat_hours = float(args.repeat_every_hours or _top_defaults.get("repeat_every_hours", 0))
     if args.profile_base:
         repeat_profile_base = Path(args.profile_base)
     elif repeat_hours > 0:
@@ -2857,12 +2880,13 @@ if __name__ == "__main__":
     else:
         repeat_profile_base = None
 
-    if repeat_hours > 0:
-        repeat_seconds = max(1.0, repeat_hours * 3600.0)
-        first_delay = delay_seconds
-        first_run = True
-        persistent_page = None
-        persistent_pages = None
+    num_runs = int(args.num_runs or _top_defaults.get("num_runs", 1))
+    repeat_seconds = max(1.0, repeat_hours * 3600.0) if repeat_hours > 0 else 0
+    use_persistent = repeat_hours > 0 or num_runs > 1
+
+    persistent_page = None
+    persistent_pages = None
+    if use_persistent:
         if sessions == 1:
             user_data_dir = _resolve_user_data_dir(repeat_profile_base, 0, sessions)
             co = ChromiumOptions()
@@ -2883,20 +2907,32 @@ if __name__ == "__main__":
                 co.set_argument('--no-first-run')
                 co.set_argument('--mute-audio')
                 persistent_pages.append(ChromiumPage(co))
-            print(f">> Created {sessions} persistent ChromiumPage instances for repeat mode.")
-        while True:
-            allow_manual_login = bool(args.allow_manual_login) or first_run
-            run_once(
-                first_delay,
-                repeat_profile_base,
-                allow_manual_login,
-                page=persistent_page,
-                pages=persistent_pages,
-                use_threads=(sessions > 1),
-            )
-            first_delay = 0
-            first_run = False
-            print(f">> Sleeping {repeat_seconds:.0f}s before next run...")
-            time.sleep(repeat_seconds)
-    else:
-        run_once(delay_seconds, repeat_profile_base, True)
+            print(f">> Created {sessions} persistent ChromiumPage instances.")
+
+    # infinite loop when repeat_hours set and num_runs==1; finite loop otherwise
+    run_count = 0
+    first_run = True
+    while True:
+        allow_manual_login = bool(args.allow_manual_login) or first_run
+        run_once(
+            delay_seconds if first_run else 0,
+            repeat_profile_base,
+            allow_manual_login,
+            page=persistent_page,
+            pages=persistent_pages,
+            use_threads=(sessions > 1),
+        )
+        run_count += 1
+        first_run = False
+
+        # Stop if we've hit the requested number of runs
+        if num_runs > 1 and run_count >= num_runs:
+            print(f">> Completed {run_count}/{num_runs} runs. Done.")
+            break
+
+        # Stop if no repeat schedule and num_runs==1 (default single-run behaviour)
+        if repeat_hours <= 0 and num_runs <= 1:
+            break
+
+        print(f">> Run {run_count} complete. Sleeping {repeat_seconds:.0f}s before next run...")
+        time.sleep(repeat_seconds)
