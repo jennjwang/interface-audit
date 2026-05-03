@@ -2189,7 +2189,7 @@ def run_audit(
     clear_only=False,
     api_only=False,
     skip_end_clear=False,
-    skip_end_clear_memory=True,
+    skip_end_clear_memory=False,
     save_mcq_only=False,
     experiment_index=None,
     stop_event=None,
