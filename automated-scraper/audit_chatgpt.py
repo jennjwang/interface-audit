@@ -320,7 +320,10 @@ def verify_strict_login(page):
     profile_btn = page.ele('@@data-testid=profile-button', timeout=chk_timeout)
     profile_img = page.ele('img[alt="Profile image"]', timeout=chk_timeout)
     user_menu = page.ele('.user-menu', timeout=chk_timeout)
-    model_selector = page.ele('button[aria-label^="Model selector"]', timeout=chk_timeout)
+    model_selector = (
+        page.ele('button[aria-label^="Model selector"]', timeout=chk_timeout) or
+        page.ele('button.__composer-pill[aria-haspopup="menu"]', timeout=1)
+    )
     new_chat = page.ele('text:New chat', timeout=chk_timeout)
 
     if _is_displayed(profile_btn) or \
@@ -1344,15 +1347,19 @@ def select_interface_model(page, model_name, timeout=8):
         True if model was selected (or already active), False on failure.
     """
     try:
-        # Wait a moment for the page to fully render after navigation
-        time.sleep(1)
+        # Wait for the page to fully render after New chat navigation
+        time.sleep(3)
 
-        # Find the model switcher button (aria-label pattern: "Model selector, current model is...")
-        switcher = (
-            page.ele('button@@data-testid=model-switcher-dropdown-button', timeout=timeout) or
-            page.ele('@@data-testid=model-switcher-dropdown-button', timeout=3) or
-            page.ele('button@@aria-label^=Model selector', timeout=3)
-        )
+        # Find the model switcher button — try composer-pill first, then legacy selectors
+        s1 = page.ele('css:button.__composer-pill[aria-haspopup="menu"]', timeout=timeout)
+        print(f">> [switcher] css:button.__composer-pill: {bool(s1)}")
+        s2 = s1 or page.ele('button@@data-testid=model-switcher-dropdown-button', timeout=3)
+        print(f">> [switcher] data-testid=model-switcher-dropdown-button: {bool(s2)}")
+        s3 = s2 or page.ele('@@data-testid=model-switcher-dropdown-button', timeout=3)
+        print(f">> [switcher] @@data-testid fallback: {bool(s3)}")
+        s4 = s3 or page.ele('button@@aria-label^=Model selector', timeout=3)
+        print(f">> [switcher] aria-label^=Model selector: {bool(s4)}")
+        switcher = s4
         if not switcher:
             print(f">> Model switcher button not found. Page may not support model selection.")
             return False
@@ -1373,18 +1380,94 @@ def select_interface_model(page, model_name, timeout=8):
         switcher.click()
         time.sleep(random.uniform(0.8, 1.5))
 
-        # Find the menu items - try multiple selector strategies
-        menu_items = page.eles('@@role=menuitem', timeout=timeout)
+        # gpt-5.4 is not a direct menu item — open Configure... to set it
+        if '5.4' in model_name:
+            configure = page.ele('@@data-testid=model-configure-modal', timeout=timeout)
+            if not configure:
+                print(f">> 'Configure...' item not found in model dropdown.")
+                try:
+                    page.actions.key_down('Escape').key_up('Escape')
+                except Exception:
+                    pass
+                return False
+            print(f">> Clicking 'Configure...' for model '{model_name}'...")
+            try:
+                configure.click()
+            except Exception as e:
+                print(f">> Normal click failed: {e}, trying JS click...")
+                configure.click(by_js=True)
+            time.sleep(random.uniform(0.8, 1.5))
+
+            # Click the model combobox inside the configure modal
+            model_combobox = (
+                page.ele('button@@role=combobox@@aria-labelledby=model-selection-label', timeout=timeout) or
+                page.ele('css:button[aria-labelledby="model-selection-label"]', timeout=3) or
+                page.ele('button@@aria-labelledby=model-selection-label', timeout=3)
+            )
+            if not model_combobox:
+                print(f">> Model combobox not found in configure modal.")
+                return False
+            print(f">> Clicking model combobox in configure modal...")
+            try:
+                model_combobox.click()
+            except Exception as e:
+                print(f">> Normal click failed: {e}, trying JS click...")
+                model_combobox.click(by_js=True)
+            time.sleep(random.uniform(0.8, 1.5))
+
+            # Extract version number (e.g. "5.4") from strings like "gpt 5.4 thinking" or "gpt-5.4"
+            _ver_match = re.search(r'\d+\.\d+', model_name)
+            version = _ver_match.group(0) if _ver_match else model_name
+            option = (
+                page.ele(f'@@role=option@@text()={version}', timeout=timeout) or
+                page.ele(f'css:[role="option"]', timeout=3)
+            )
+            # If exact match failed, scan all options for the version string
+            if not option or version not in (option.text or ''):
+                all_options = page.eles('@@role=option', timeout=3) or []
+                option = next((o for o in all_options if version in (o.text or '')), None)
+
+            if not option:
+                print(f">> Version '{version}' not found in combobox dropdown.")
+                return False
+            print(f">> Selecting version '{option.text.strip()}'...")
+            try:
+                option.click()
+            except Exception as e:
+                print(f">> Normal click failed: {e}, trying JS click...")
+                option.click(by_js=True)
+            time.sleep(random.uniform(0.5, 1.0))
+
+            # Close the configure modal
+            close_btn = page.ele('@@data-testid=close-button', timeout=5)
+            if close_btn:
+                print(f">> Closing configure modal...")
+                try:
+                    close_btn.click()
+                except Exception as e:
+                    close_btn.click(by_js=True)
+                time.sleep(random.uniform(0.3, 0.6))
+            else:
+                print(f">> Close button not found, pressing Escape...")
+                try:
+                    page.actions.key_down('Escape').key_up('Escape')
+                except Exception:
+                    pass
+            return True
+
+        # Find the menu items — include both menuitem and menuitemradio roles
+        menu_items = (
+            page.eles('@@role=menuitemradio', timeout=timeout) or
+            page.eles('css:[role="menuitemradio"]', timeout=3)
+        )
         if not menu_items:
-            # Try finding menu items by common patterns
-            menu_items = page.eles('css:div[role="menuitem"]', timeout=3)
-        if not menu_items:
-            # Try data-testid pattern
-            menu_items = page.eles('@@data-testid^model', timeout=3)
+            menu_items = (
+                page.eles('@@role=menuitem', timeout=3) or
+                page.eles('@@data-testid^model-switcher', timeout=3)
+            )
 
         if not menu_items:
             print(f">> No menu items found in model dropdown.")
-            # Close dropdown by pressing Escape
             try:
                 page.actions.key_down('Escape').key_up('Escape')
             except Exception:
@@ -1393,13 +1476,12 @@ def select_interface_model(page, model_name, timeout=8):
 
         print(f">> Found {len(menu_items)} menu items")
 
-        # Find the matching item (case-insensitive search for "instant" or "thinking")
+        # Find the matching item by text (case-insensitive)
         target = None
         available_items = []
         for item in menu_items:
             item_text = (item.text or '').strip()
             available_items.append(item_text)
-            # Match model_name anywhere in the text (e.g., "instant" matches "5.2 Instant")
             if model_name.lower() in item_text.lower():
                 target = item
                 print(f">> Found matching menu item: '{item_text}'")
