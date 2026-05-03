@@ -1399,13 +1399,11 @@ def select_interface_model(page, model_name, timeout=8):
             time.sleep(random.uniform(1.5, 2.5))
 
             # Click the model combobox inside the configure modal
-            c1 = page.ele('button@@role=combobox@@aria-labelledby=model-selection-label', timeout=timeout)
-            print(f">> [combobox] role=combobox@@aria-labelledby: {bool(c1)}")
-            c2 = c1 or page.ele('css:button[aria-labelledby="model-selection-label"]', timeout=3)
-            print(f">> [combobox] css aria-labelledby: {bool(c2)}")
-            c3 = c2 or page.ele('button@@aria-labelledby=model-selection-label', timeout=3)
-            print(f">> [combobox] @@aria-labelledby: {bool(c3)}")
-            model_combobox = c3
+            c1 = page.ele('css:button[aria-labelledby="model-selection-label"]', timeout=timeout)
+            print(f">> [combobox] css aria-labelledby: {bool(c1)}")
+            c2 = c1 or page.ele('button@@aria-labelledby=model-selection-label', timeout=3)
+            print(f">> [combobox] @@aria-labelledby: {bool(c2)}")
+            model_combobox = c2
             if not model_combobox:
                 print(f">> Model combobox not found in configure modal.")
                 return False
