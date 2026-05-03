@@ -43,7 +43,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "scripts"))
 from parse_raw_run import parse_gemini_run as _parse_gemini_run
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = BASE_DIR / "gemini_data"
 # Where auto-parse writes Gemini JSON by default.
 # Keep this scoped to the scraper's own data directory so we don't
 # directly write into any experiments/* trees (e.g. metabench-mmlu).
