@@ -1,6 +1,6 @@
 defaults:
   # query_file: ../experiments/aa-omniscience/queries.csv
-  query_file: ../experiments/bbq/queries.csv
+  query_file: /home/jenn/automated-scraper/benchmark_creation/results/bbq-subset-10.csv
   runs: 1
   shuffle: false
   fast: true
