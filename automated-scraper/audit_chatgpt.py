@@ -24,7 +24,7 @@ except Exception:
 sys.path.append(str(Path(__file__).parent.parent))
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR / "data"
+DATA_DIR = BASE_DIR / "chatgpt_data"
 
 class _TimestampedTee:
     """Write to console as-is, and to log(s) with timestamps per line."""
