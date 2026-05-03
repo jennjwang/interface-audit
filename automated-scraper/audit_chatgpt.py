@@ -1381,7 +1381,7 @@ def select_interface_model(page, model_name, timeout=8):
         time.sleep(random.uniform(0.8, 1.5))
 
         # gpt-5.4 is not a direct menu item — open Configure... to set it
-        if '5.4' in model_name:
+        if re.search(r'5[.\-]4', model_name):
             configure = page.ele('@@data-testid=model-configure-modal', timeout=timeout)
             if not configure:
                 print(f">> 'Configure...' item not found in model dropdown.")
@@ -1396,18 +1396,20 @@ def select_interface_model(page, model_name, timeout=8):
             except Exception as e:
                 print(f">> Normal click failed: {e}, trying JS click...")
                 configure.click(by_js=True)
-            time.sleep(random.uniform(0.8, 1.5))
+            time.sleep(random.uniform(1.5, 2.5))
 
             # Click the model combobox inside the configure modal
-            model_combobox = (
-                page.ele('button@@role=combobox@@aria-labelledby=model-selection-label', timeout=timeout) or
-                page.ele('css:button[aria-labelledby="model-selection-label"]', timeout=3) or
-                page.ele('button@@aria-labelledby=model-selection-label', timeout=3)
-            )
+            c1 = page.ele('button@@role=combobox@@aria-labelledby=model-selection-label', timeout=timeout)
+            print(f">> [combobox] role=combobox@@aria-labelledby: {bool(c1)}")
+            c2 = c1 or page.ele('css:button[aria-labelledby="model-selection-label"]', timeout=3)
+            print(f">> [combobox] css aria-labelledby: {bool(c2)}")
+            c3 = c2 or page.ele('button@@aria-labelledby=model-selection-label', timeout=3)
+            print(f">> [combobox] @@aria-labelledby: {bool(c3)}")
+            model_combobox = c3
             if not model_combobox:
                 print(f">> Model combobox not found in configure modal.")
                 return False
-            print(f">> Clicking model combobox in configure modal...")
+            print(f">> Clicking model combobox (text='{(model_combobox.text or '').strip()}')...")
             try:
                 model_combobox.click()
             except Exception as e:
@@ -1416,8 +1418,9 @@ def select_interface_model(page, model_name, timeout=8):
             time.sleep(random.uniform(0.8, 1.5))
 
             # Extract version number (e.g. "5.4") from strings like "gpt 5.4 thinking" or "gpt-5.4"
-            _ver_match = re.search(r'\d+\.\d+', model_name)
-            version = _ver_match.group(0) if _ver_match else model_name
+            # Normalize version: "5-4" or "5.4" → "5.4" for combobox matching
+            _ver_match = re.search(r'(\d+)[.\-](\d+)', model_name)
+            version = f"{_ver_match.group(1)}.{_ver_match.group(2)}" if _ver_match else model_name
             option = (
                 page.ele(f'@@role=option@@text()={version}', timeout=timeout) or
                 page.ele(f'css:[role="option"]', timeout=3)
@@ -1437,6 +1440,23 @@ def select_interface_model(page, model_name, timeout=8):
                 print(f">> Normal click failed: {e}, trying JS click...")
                 option.click(by_js=True)
             time.sleep(random.uniform(0.5, 1.0))
+
+            # If "thinking" in model name, select the Thinking radio button in the modal
+            if 'thinking' in model_name.lower():
+                thinking_radio = None
+                for radio in (page.eles('@@role=radio', timeout=5) or []):
+                    if 'thinking' in (radio.text or '').lower():
+                        thinking_radio = radio
+                        break
+                if thinking_radio:
+                    print(f">> Selecting Thinking mode...")
+                    try:
+                        thinking_radio.click()
+                    except Exception as e:
+                        thinking_radio.click(by_js=True)
+                    time.sleep(random.uniform(0.3, 0.6))
+                else:
+                    print(f">> Thinking radio button not found in modal.")
 
             # Close the configure modal
             close_btn = page.ele('@@data-testid=close-button', timeout=5)
@@ -1725,7 +1745,10 @@ def _api_barrier_worker(
             print(f">> [API {m_name}] Stop signal received. Halting.")
             return
 
-        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier...")
+        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier 1...")
+        barrier.wait()
+
+        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier 2 (send barrier)...")
         barrier.wait()
 
         sent_at = datetime.now().isoformat()
@@ -1897,6 +1920,15 @@ def run_experiment(
                 print(">> Input box still missing. Refreshing...")
                 page.refresh()
                 time.sleep(5)
+
+            # Second barrier: wait for all sessions to finish model selection before sending
+            if sync_barrier:
+                print(f">> [session {session_id}] Waiting at send barrier {i}...")
+                try:
+                    sync_barrier.wait()
+                    print(f">> [session {session_id}] All sessions ready to send query {i+1}.")
+                except Exception as e:
+                    print(f">> Send barrier wait failed ({e}) — proceeding anyway")
 
             # Check for unusual-activity block before attempting each query
             _check_unusual_activity(page)

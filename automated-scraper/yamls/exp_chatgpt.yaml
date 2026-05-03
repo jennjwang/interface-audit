@@ -1,6 +1,6 @@
 defaults:
   # query_file: ../experiments/aa-omniscience/queries.csv
-  query_file: /home/jenn/automated-scraper/benchmark_creation/results/bbq-subset-10.csv
+  query_file: /Users/jenniferwang/PhD/personalization/benchmark_creation/results/bbq-subset-10.csv
   runs: 1
   shuffle: false
   fast: true
@@ -24,4 +24,4 @@ experiments:
 
   - name: gpt-5-4-thinking
     type: non-temporary
-    interface_model: gpt-5.4-thinking
+    interface_model: gpt-5-4-thinking
