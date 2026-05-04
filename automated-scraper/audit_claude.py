@@ -669,6 +669,7 @@ def ensure_new_chat(page, attempts=3):
     """Navigate to a fresh claude.ai conversation."""
     for _ in range(attempts):
         try:
+            page.set.load_strategy.eager()
             page.get(CLAUDE_NEW_CHAT_URL)
             if page.ele('div[contenteditable="true"]', timeout=8) or \
                page.ele('textarea', timeout=3):
