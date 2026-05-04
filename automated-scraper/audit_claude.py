@@ -1270,6 +1270,7 @@ def run_experiment(
         print(f"    Shuffled {len(queries)} queries.")
 
     prev_reuse = None
+    web_search_confirmed_off = False
     for i, item in enumerate(queries):
         if stop_event and stop_event.is_set():
             print(">> Stop signal received. Halting.")
@@ -1296,7 +1297,9 @@ def run_experiment(
             # Open a new chat when not reusing
             if not effective_reuse:
                 ensure_new_chat(page)
-                disable_web_search(page)
+                if not web_search_confirmed_off:
+                    disable_web_search(page)
+                    web_search_confirmed_off = True
                 if interface_model:
                     select_interface_model(page, interface_model)
             prev_reuse = effective_reuse
@@ -1384,7 +1387,9 @@ def run_experiment(
                     if elapsed > wait_timeout:
                         print(f">> Timed out after {wait_timeout}s. Re-sending...")
                         ensure_new_chat(page)
-                        disable_web_search(page)
+                        if not web_search_confirmed_off:
+                            disable_web_search(page)
+                            web_search_confirmed_off = True
                         if interface_model:
                             select_interface_model(page, interface_model)
                         prompt_input = _find_prompt_input(page)
