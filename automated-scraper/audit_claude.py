@@ -1110,6 +1110,67 @@ def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False):
     return [single] if single else []
 
 
+def _api_barrier_worker(
+    query_file, runs, shuffle, seed,
+    api_cfg, api_key,
+    output_base,
+    sync_barrier_info, stop_event,
+):
+    """Standalone API worker that participates in the per-query send barrier."""
+    barrier = FileBasedBarrier(
+        parties=sync_barrier_info["parties"],
+        sync_dir=sync_barrier_info["sync_dir"],
+        session_id=sync_barrier_info["session_id"],
+    )
+
+    m_name = api_cfg["model"]
+    m_params = {k: v for k, v in api_cfg.items() if k != "model"}
+    m_dir = m_name + ("_" + "_".join(f"{k}-{v}" for k, v in sorted(m_params.items())) if m_params else "")
+    output_dir = Path(output_base) / m_dir
+
+    queries_base = load_queries_from_file(query_file)
+    if not queries_base:
+        print(f">> [API {m_name}] No queries loaded. Exiting worker.")
+        return
+
+    queries = []
+    for item in queries_base:
+        q_id = item.get("id") if isinstance(item, dict) else item[0]
+        q_text = item.get("query") if isinstance(item, dict) else item[1]
+        for r in range(runs):
+            queries.append({"id": f"{q_id}_run{r}", "query": q_text})
+
+    if shuffle:
+        queries = shuffle_no_consecutive(queries, seed=seed)
+
+    print(f">> [API {m_name}] Starting barrier worker with {len(queries)} queries.")
+
+    for i, item in enumerate(queries):
+        if stop_event and stop_event.is_set():
+            print(f">> [API {m_name}] Stop signal received. Halting.")
+            return
+
+        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at send barrier...")
+        barrier.wait()
+
+        attempt = 0
+        while True:
+            if stop_event and stop_event.is_set():
+                return
+            sent_at = datetime.now().isoformat()
+            print(f">> [API {m_name}] Sending {item['id']} (attempt {attempt+1})...")
+            record = run_api_query(item["id"], item["query"], str(output_dir), m_name,
+                                   sent_at=sent_at, api_key=api_key, **m_params)
+            if not record.get("error"):
+                break
+            attempt += 1
+            wait = min(60 * (2 ** (attempt - 1)), 3600)
+            print(f">> [API {m_name}] Query {item['id']} failed: {record['error']} — retrying in {wait}s...")
+            time.sleep(wait)
+
+    print(f">> [API {m_name}] All queries complete.")
+
+
 def run_experiment(
     page,
     experiment,
@@ -1145,7 +1206,6 @@ def run_experiment(
         exp_seed = seed_override
 
     output_dir = DATA_DIR / "raw_html" / run_id / f"session_{session_id:02d}" / save_group_name
-    api_output_base = DATA_DIR / "api" / run_id / save_group_name
 
     print(f"\n>>> STARTING EXPERIMENT: {exp_name}")
     print(f"    Query File: {query_file}")
@@ -1204,7 +1264,6 @@ def run_experiment(
             print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
             continue
 
-        api_threads = []
         try:
             print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
             skip_query = False
@@ -1277,19 +1336,6 @@ def run_experiment(
                             }));
                         """)
                 sent_at = datetime.now().isoformat()
-                if session_id == 0:
-                    for api_cfg in api_models:
-                        m_name = api_cfg["model"]
-                        m_params = {k: v for k, v in api_cfg.items() if k != "model"}
-                        m_output = api_output_base / m_name
-                        t = threading.Thread(
-                            target=run_api_query,
-                            args=(q_id, q_text, m_output, m_name),
-                            kwargs={"sent_at": sent_at, "api_key": ANTHROPIC_KEY, **m_params},
-                            daemon=True,
-                        )
-                        t.start()
-                        api_threads.append(t)
 
             if not skip_query:
                 print(">> Waiting for response...")
@@ -1363,8 +1409,7 @@ def run_experiment(
             traceback.print_exc()
             print(">> Continuing to next query.")
         finally:
-            for t in api_threads:
-                t.join()
+            pass
 
         # Wait between queries (skip if configured to 0)
         if isinstance(wait_after_saves, list) and len(wait_after_saves) == 2:
@@ -1812,14 +1857,16 @@ if __name__ == "__main__":
         _thread_log_state = None
 
         # Create barrier info for per-query cross-session synchronisation
+        n_api_workers = len(effective_api_models) if (config_mode == "sync" and sessions > 1 and effective_api_models) else 0
         sync_barrier_info = None
         if config_mode == "sync" and sessions > 1:
             sync_dir = DATA_DIR / "sync" / run_id / "queries"
             sync_dir.mkdir(parents=True, exist_ok=True)
             sync_barrier_info = {
-                "parties": sessions,
+                "parties": sessions + n_api_workers,
                 "sync_dir": str(sync_dir),
             }
+        browser_api_models = [] if n_api_workers > 0 else effective_api_models
 
         use_threads = persistent_pages is not None
 
@@ -1843,7 +1890,7 @@ if __name__ == "__main__":
                     "run_id": run_id,
                     "session_id": sid,
                     "seed_override": seed_override,
-                    "api_models": effective_api_models,
+                    "api_models": browser_api_models,
                     "interface_model": args.interface_model,
                     "allow_manual_login": allow_manual,
                     "page": persistent_pages[sid],
@@ -1873,7 +1920,7 @@ if __name__ == "__main__":
                     "run_id": run_id,
                     "session_id": exp_idx,
                     "seed_override": seed_override,
-                    "api_models": effective_api_models,
+                    "api_models": browser_api_models,
                     "interface_model": args.interface_model,
                     "allow_manual_login": allow_manual,
                     "clear_memory_first": bool(args.clear_memory),
@@ -1898,13 +1945,40 @@ if __name__ == "__main__":
                     "run_id": run_id,
                     "session_id": session_id,
                     "seed_override": seed_override,
-                    "api_models": effective_api_models,
+                    "api_models": browser_api_models,
                     "interface_model": args.interface_model,
                     "allow_manual_login": allow_manual,
                     "clear_memory_first": bool(args.clear_memory),
                     "clear_only": clear_only,
                     "stop_event": stop_event,
                     "api_ready_event": api_ready_event,
+                })
+                p.start()
+                procs.append(p)
+
+        # Launch API barrier workers (one per API model, sync mode only)
+        if n_api_workers > 0 and sync_barrier_info:
+            cfg = _parsed_configs[config_paths[0]]
+            cfg_defaults = cfg.get("defaults", {}) if isinstance(cfg, dict) else {}
+            query_file = cfg_defaults.get("query_file") or \
+                         (cfg.get("experiments", [{}])[0].get("query_file") if isinstance(cfg, dict) else None)
+            runs = int(cfg_defaults.get("runs", 1))
+            shuffle = bool(cfg_defaults.get("shuffle", False))
+            api_output_base = DATA_DIR / "api" / run_id
+            for api_idx, api_cfg in enumerate(effective_api_models):
+                api_sid = sessions + api_idx
+                api_bi = dict(sync_barrier_info)
+                api_bi["session_id"] = api_sid
+                p = mp.Process(target=_api_barrier_worker, kwargs={
+                    "query_file": query_file,
+                    "runs": runs,
+                    "shuffle": shuffle,
+                    "seed": seed_override,
+                    "api_cfg": api_cfg,
+                    "api_key": ANTHROPIC_KEY,
+                    "output_base": str(api_output_base),
+                    "sync_barrier_info": api_bi,
+                    "stop_event": stop_event,
                 })
                 p.start()
                 procs.append(p)
