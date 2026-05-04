@@ -962,7 +962,7 @@ def run_experiment(
             return
 
         q_id = item["id"]
-        q_text = item["query"]
+        q_text = "Please do not use web search for this question.\n\n" + item["query"]
         item_reuse = item.get("reuse_chat")
         effective_reuse = reuse_chat if item_reuse is None else bool(item_reuse)
         is_mcq = item.get("is_mcq")
