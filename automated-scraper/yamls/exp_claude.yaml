@@ -1,5 +1,6 @@
 defaults:
-  query_file: /home/jenn/automated-scraper/benchmark_creation/results/bbq-subset-10.csv
+  query_file: ../benchmark_creation/results/aa-omniscience-subset-10.csv
+  # query_file: /home/jenn/automated-scraper/benchmark_creation/results/bbq-subset-10.csv
   # query_file: ../experiments/bbq/queries.csv
   runs: 1
   shuffle: false
@@ -12,12 +13,12 @@ defaults:
 mode: sync
 
 api_models:
-  - model: claude-opus-4-7
-    web_search: false
-  - model: claude-sonnet-4-6
-    web_search: false
-  - model: claude-haiku-4-5-20251001
-    web_search: false
+  # - model: claude-opus-4-7
+  #   web_search: false
+  # - model: claude-sonnet-4-6
+  #   web_search: false
+  # - model: claude-haiku-4-5-20251001
+  #   web_search: false
 
 experiments:
   - name: haiku
