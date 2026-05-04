@@ -1754,9 +1754,13 @@ def _api_barrier_worker(
                                    sent_at=sent_at, api_key=api_key, **m_params)
             if not record.get("error"):
                 break
+            err = record["error"]
+            if any(code in str(err) for code in ("401", "403", "PERMISSION_DENIED", "UNAUTHENTICATED")):
+                print(f">> [API {m_name}] Permanent error for {item['id']}: {err} — skipping.")
+                break
             attempt += 1
             wait = min(60 * (2 ** (attempt - 1)), 3600)
-            print(f">> [API {m_name}] Query {item['id']} failed: {record['error']} — retrying in {wait}s...")
+            print(f">> [API {m_name}] Query {item['id']} failed: {err} — retrying in {wait}s...")
             time.sleep(wait)
 
         queries_done += 1
