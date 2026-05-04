@@ -671,8 +671,6 @@ def ensure_new_chat(page, attempts=3):
     for _ in range(attempts):
         try:
             page.get(CLAUDE_NEW_CHAT_URL)
-            time.sleep(random.uniform(1.5, 2.5))
-            # Wait for the prompt textarea to appear
             if page.ele('div[contenteditable="true"]', timeout=8) or \
                page.ele('textarea', timeout=3):
                 return True
@@ -689,8 +687,9 @@ def ensure_new_chat(page, attempts=3):
         if btn:
             try:
                 btn.click()
-                time.sleep(random.uniform(1.0, 2.0))
-                return True
+                if page.ele('div[contenteditable="true"]', timeout=5) or \
+                   page.ele('textarea', timeout=3):
+                    return True
             except Exception:
                 pass
         page.refresh()
