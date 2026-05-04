@@ -63,19 +63,15 @@ class FileBasedBarrier:
         self.barrier_id = barrier_id
         self.sync_dir.mkdir(parents=True, exist_ok=True)
 
-    def wait(self, timeout=120):
-        """Wait for all parties to reach the barrier, or proceed after timeout seconds."""
+    def wait(self):
+        """Wait indefinitely for all parties to reach the barrier."""
         checkpoint_file = self.sync_dir / f"barrier_{self.barrier_id}_session_{self.session_id}.ready"
         checkpoint_file.write_text(str(time.time()))
 
-        deadline = time.time() + timeout
         while True:
             ready_count = len(list(self.sync_dir.glob(f"barrier_{self.barrier_id}_session_*.ready")))
             if ready_count >= self.parties:
                 time.sleep(0.05)
-                break
-            if time.time() > deadline:
-                print(f">> [barrier {self.barrier_id}] Timeout after {timeout}s ({ready_count}/{self.parties} ready) — proceeding anyway.")
                 break
             time.sleep(0.1)
 
