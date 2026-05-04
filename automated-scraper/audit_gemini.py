@@ -159,18 +159,23 @@ def _detect_is_mcq(item):
     return None
 
 
-def find_resume_point(data_dir, query_file):
+def _api_model_dir_name(api_cfg):
+    """Reproduce the output directory name for an API model config dict."""
+    m_name = api_cfg["model"]
+    m_params = {k: v for k, v in api_cfg.items() if k != "model"}
+    return m_name + ("_" + "_".join(f"{k}-{v}" for k, v in sorted(m_params.items())) if m_params else "")
+
+
+def find_resume_point(data_dir, query_file, config=None):
     """Return a filtered query list starting after the last query completed in all outputs.
 
-    Scans the most recent run in data_dir/raw_html and data_dir/api, finds the
-    intersection of completed query IDs, then returns queries from the original
-    file starting after the last completed position.
+    If config is provided, only checks outputs for the experiments and API models
+    defined in the config (ignores unrelated directories from the same run).
     """
     data_dir = Path(data_dir)
     raw_html_dir = data_dir / "raw_html"
     api_dir = data_dir / "api"
 
-    # Find most recent run (by directory name, which is a timestamp)
     run_dirs = sorted(raw_html_dir.glob("*"), reverse=True) if raw_html_dir.exists() else []
     if not run_dirs:
         print(">> [resume] No previous runs found — starting from the beginning.")
@@ -179,20 +184,33 @@ def find_resume_point(data_dir, query_file):
     latest_run = run_dirs[0].name
     print(f">> [resume] Resuming from run: {latest_run}")
 
-    # Collect completed IDs from all interface session outputs
+    # Determine which experiment names and API model dirs to check
+    exp_names = None
+    api_model_dirs = None
+    if config and isinstance(config, dict):
+        exps = config.get("experiments", [])
+        if exps:
+            exp_names = {e["name"] for e in exps if "name" in e}
+        api_models = config.get("api_models", [])
+        if api_models:
+            api_model_dirs = {_api_model_dir_name(m) for m in api_models}
+
     completed_sets = []
     session_root = raw_html_dir / latest_run
     for session_dir in sorted(session_root.iterdir()):
         for exp_dir in sorted(session_dir.iterdir()):
+            if exp_names and exp_dir.name not in exp_names:
+                continue
             ids = {f.stem for f in exp_dir.glob("*.html")}
             if ids:
                 completed_sets.append(ids)
                 print(f">> [resume]   {session_dir.name}/{exp_dir.name}: {len(ids)} responses")
 
-    # Collect completed IDs from all API outputs
     api_run_dir = api_dir / latest_run
     if api_run_dir.exists():
         for model_dir in sorted(api_run_dir.iterdir()):
+            if api_model_dirs and model_dir.name not in api_model_dirs:
+                continue
             ids = {f.stem.replace(".api", "") for f in model_dir.glob("*.api.json")}
             if ids:
                 completed_sets.append(ids)
@@ -202,11 +220,9 @@ def find_resume_point(data_dir, query_file):
         print(">> [resume] No completed queries found — starting from the beginning.")
         return None
 
-    # Intersection: only queries every output has
     common_ids = set.intersection(*completed_sets)
     print(f">> [resume] {len(common_ids)} queries completed across all outputs.")
 
-    # Load original query file and find last completed position
     all_queries = load_queries_from_file(query_file)
     if not all_queries:
         return None
@@ -222,7 +238,8 @@ def find_resume_point(data_dir, query_file):
         return all_queries
 
     remaining = all_queries[last_pos + 1:]
-    print(f">> [resume] Last completed: position {last_pos} (id={all_queries[last_pos].get('id') if isinstance(all_queries[last_pos], dict) else all_queries[last_pos][0]}). {len(remaining)} queries remaining.")
+    last_id = all_queries[last_pos].get("id") if isinstance(all_queries[last_pos], dict) else all_queries[last_pos][0]
+    print(f">> [resume] Last completed: position {last_pos} (id={last_id}). {len(remaining)} queries remaining.")
     return remaining
 
 
@@ -1666,7 +1683,7 @@ if __name__ == "__main__":
                               (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
             if orig_query_file:
                 resolved_qf = str(BASE_DIR / orig_query_file) if not Path(orig_query_file).is_absolute() else orig_query_file
-                remaining = find_resume_point(DATA_DIR, resolved_qf)
+                remaining = find_resume_point(DATA_DIR, resolved_qf, config=cfg)
                 if remaining is not None and len(remaining) < len(load_queries_from_file(resolved_qf)):
                     import csv as _csv
                     resume_path = DATA_DIR / "resume_cache.csv"
