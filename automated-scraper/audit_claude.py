@@ -667,33 +667,15 @@ def detect_model_from_html(html):
 
 def ensure_new_chat(page, attempts=3):
     """Navigate to a fresh claude.ai conversation."""
+    page.set.load_mode.none()
     for _ in range(attempts):
         try:
-            page.set.timeouts(page_load=10)
             page.get(CLAUDE_NEW_CHAT_URL)
-            if page.ele('div[contenteditable="true"]', timeout=8) or \
-               page.ele('textarea', timeout=3):
-                return True
+            page.wait.doc_loaded(timeout=10)
+            return True
         except Exception as e:
             print(f">> ensure_new_chat error: {e}")
             time.sleep(1)
-    # Try clicking the New Chat button as fallback
-    for _ in range(attempts):
-        btn = (
-            page.ele('a[href="/new"]', timeout=3) or
-            page.ele('text:New chat', timeout=2) or
-            page.ele('text:New Chat', timeout=2)
-        )
-        if btn:
-            try:
-                btn.click()
-                if page.ele('div[contenteditable="true"]', timeout=5) or \
-                   page.ele('textarea', timeout=3):
-                    return True
-            except Exception:
-                pass
-        page.refresh()
-        time.sleep(2)
     return False
 
 
