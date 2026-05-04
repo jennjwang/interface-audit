@@ -1109,12 +1109,18 @@ def _rotate_query_file(experiment, defaults, rotate_slot=None):
     return chosen, idx
 
 
-def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False):
+def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False, rotate_slot=None):
     """Return query files in sequence for this experiment.
 
-    In sync multi-session mode we prefer defaults-level rotation so all
-    experiments advance through the same file list together.
+    In sync multi-session mode (prefer_defaults_rotate=True, rotate_slot set),
+    each session picks exactly ONE file from the rotation list by slot index so
+    all sessions process the same number of queries and barrier counts match.
     """
+    if prefer_defaults_rotate and rotate_slot is not None:
+        # Sync mode: pick a single file by slot (same as API workers)
+        chosen, _ = _rotate_query_file(experiment, defaults, rotate_slot=rotate_slot)
+        return [str(chosen)] if chosen else []
+
     if prefer_defaults_rotate:
         rotate_list = defaults.get("rotate_query_files")
     else:
@@ -1549,6 +1555,7 @@ def run_audit(
                     experiment,
                     defaults,
                     prefer_defaults_rotate=experiment_index is not None,
+                    rotate_slot=experiment_index,
                 )
                 for file_idx, qf in enumerate(query_files):
                     if len(query_files) > 1:
@@ -1659,6 +1666,7 @@ def run_audit(
                     exp,
                     defaults,
                     prefer_defaults_rotate=experiment_index is not None,
+                    rotate_slot=experiment_index,
                 )
                 if not query_files:
                     print(f">> No query file configured for experiment '{exp.get('name', 'experiment')}'. Skipping.")
