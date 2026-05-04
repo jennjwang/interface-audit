@@ -1979,23 +1979,21 @@ if __name__ == "__main__":
         if n_api_workers > 0 and sync_barrier_info:
             cfg = _parsed_configs[config_paths[0]]
             cfg_defaults = cfg.get("defaults", {}) if isinstance(cfg, dict) else {}
-            rotate_list = cfg_defaults.get("rotate_query_files")
-            if rotate_list and isinstance(rotate_list, list):
-                # Use the first file in the rotation list for API workers
-                # (all API workers use the same combined query set)
-                query_file = str(BASE_DIR / rotate_list[0]) if not Path(rotate_list[0]).is_absolute() else rotate_list[0]
-            else:
-                query_file = cfg_defaults.get("query_file") or \
-                             (cfg.get("experiments", [{}])[0].get("query_file") if isinstance(cfg, dict) else None)
             runs = int(cfg_defaults.get("runs", 1))
             shuffle = bool(cfg_defaults.get("shuffle", False))
             api_output_base = DATA_DIR / "api" / run_id
             for api_idx, api_cfg in enumerate(effective_api_models):
+                # Each API worker rotates through query files the same way browser sessions do
+                api_query_file, _ = _rotate_query_file(
+                    {}, cfg_defaults, rotate_slot=api_idx
+                )
+                if api_query_file and not Path(api_query_file).is_absolute():
+                    api_query_file = str(BASE_DIR / api_query_file)
                 api_sid = sessions + api_idx
                 api_bi = dict(sync_barrier_info)
                 api_bi["session_id"] = api_sid
                 p = mp.Process(target=_api_barrier_worker, kwargs={
-                    "query_file": query_file,
+                    "query_file": api_query_file,
                     "runs": runs,
                     "shuffle": shuffle,
                     "seed": seed_override,
