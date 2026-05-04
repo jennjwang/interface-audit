@@ -990,10 +990,6 @@ def run_experiment(
                 return
 
             attempt += 1
-            if attempt > 5:
-                print(f">> Max attempts (5) reached for {q_id} — skipping.")
-                query_complete = True
-                break
             if attempt > 1:
                 print(f">> Re-running {q_id} (attempt {attempt})...")
 
