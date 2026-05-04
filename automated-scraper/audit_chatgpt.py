@@ -1744,10 +1744,20 @@ def _api_barrier_worker(
         print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at send barrier...")
         barrier.wait()
 
-        sent_at = datetime.now().isoformat()
-        print(f">> [API {m_name}] Sending {item['id']}...")
-        run_api_query(item["id"], item["query"], str(output_dir), m_name,
-                      sent_at=sent_at, api_key=api_key, **m_params)
+        attempt = 0
+        while True:
+            if stop_event and stop_event.is_set():
+                return
+            sent_at = datetime.now().isoformat()
+            print(f">> [API {m_name}] Sending {item['id']} (attempt {attempt+1})...")
+            record = run_api_query(item["id"], item["query"], str(output_dir), m_name,
+                                   sent_at=sent_at, api_key=api_key, **m_params)
+            if not record.get("error"):
+                break
+            attempt += 1
+            wait = min(60 * (2 ** (attempt - 1)), 3600)
+            print(f">> [API {m_name}] Query {item['id']} failed: {record['error']} — retrying in {wait}s...")
+            time.sleep(wait)
 
         queries_done += 1
         if batch_size > 0 and queries_done % batch_size == 0:
