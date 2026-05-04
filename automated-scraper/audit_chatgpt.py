@@ -415,6 +415,64 @@ def _detect_is_mcq(item):
         return True
     return None
 
+def find_resume_point(data_dir, query_file):
+    """Return a filtered query list starting after the last query completed in all outputs."""
+    data_dir = Path(data_dir)
+    raw_html_dir = data_dir / "raw_html"
+    api_dir = data_dir / "api"
+
+    run_dirs = sorted(raw_html_dir.glob("*"), reverse=True) if raw_html_dir.exists() else []
+    if not run_dirs:
+        print(">> [resume] No previous runs found — starting from the beginning.")
+        return None
+
+    latest_run = run_dirs[0].name
+    print(f">> [resume] Resuming from run: {latest_run}")
+
+    completed_sets = []
+    session_root = raw_html_dir / latest_run
+    for session_dir in sorted(session_root.iterdir()):
+        for exp_dir in sorted(session_dir.iterdir()):
+            ids = {f.stem for f in exp_dir.glob("*.html")}
+            if ids:
+                completed_sets.append(ids)
+                print(f">> [resume]   {session_dir.name}/{exp_dir.name}: {len(ids)} responses")
+
+    api_run_dir = api_dir / latest_run
+    if api_run_dir.exists():
+        for model_dir in sorted(api_run_dir.iterdir()):
+            ids = {f.stem.replace(".api", "") for f in model_dir.glob("*.api.json")}
+            if ids:
+                completed_sets.append(ids)
+                print(f">> [resume]   api/{model_dir.name}: {len(ids)} responses")
+
+    if not completed_sets:
+        print(">> [resume] No completed queries found — starting from the beginning.")
+        return None
+
+    common_ids = set.intersection(*completed_sets)
+    print(f">> [resume] {len(common_ids)} queries completed across all outputs.")
+
+    all_queries = load_queries_from_file(query_file)
+    if not all_queries:
+        return None
+
+    last_pos = -1
+    for i, q in enumerate(all_queries):
+        q_id = str(q.get("id") if isinstance(q, dict) else q[0])
+        if f"{q_id}_run0" in common_ids or q_id in common_ids:
+            last_pos = i
+
+    if last_pos == -1:
+        print(">> [resume] No matching completed queries in query file — starting from the beginning.")
+        return all_queries
+
+    remaining = all_queries[last_pos + 1:]
+    last_id = all_queries[last_pos].get("id") if isinstance(all_queries[last_pos], dict) else all_queries[last_pos][0]
+    print(f">> [resume] Last completed: position {last_pos} (id={last_id}). {len(remaining)} queries remaining.")
+    return remaining
+
+
 def load_queries_from_file(query_file):
     """Load queries from a CSV or JSON file with 'id' and 'query' entries.
     JSON items can optionally include 'reuse_chat' to control chat reuse per query.
@@ -2515,6 +2573,7 @@ if __name__ == "__main__":
     parser.add_argument('--repeat-every-hours', type=float, default=0, help='Repeat full experiment every N hours (0 = run once)')
     parser.add_argument('--num-runs', type=int, default=1, help='Number of full experiment passes to run (default: 1; combine with --repeat-every-hours to add a delay between passes)')
     parser.add_argument('--allow-manual-login', action='store_true', help='Allow manual login prompts when repeating runs')
+    parser.add_argument('--resume', action='store_true', help='Pick up where the last run left off (skip already-completed queries).')
     parser.add_argument('--api-models', type=str, default=None,
                         help='Comma-separated API models (overrides YAML api_models). '
                              'Format: model_name or model_name:param_value '
@@ -2646,6 +2705,26 @@ if __name__ == "__main__":
         if args.output_tag:
             run_id = f"{run_id}-{args.output_tag}"
         clear_only = bool(args.clear_chat) or bool(args.clear_memory)
+
+        if args.resume:
+            cfg = _parsed_configs[config_paths[0]]
+            orig_query_file = cfg.get("defaults", {}).get("query_file") or \
+                              (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
+            if orig_query_file:
+                resolved_qf = str(BASE_DIR / orig_query_file) if not Path(orig_query_file).is_absolute() else orig_query_file
+                remaining = find_resume_point(DATA_DIR, resolved_qf)
+                if remaining is not None and len(remaining) < len(load_queries_from_file(resolved_qf)):
+                    import csv as _csv
+                    resume_path = DATA_DIR / "resume_cache.csv"
+                    keys = list(remaining[0].keys()) if remaining and isinstance(remaining[0], dict) else ["id", "query"]
+                    with open(resume_path, "w", newline="", encoding="utf-8") as f:
+                        w = _csv.DictWriter(f, fieldnames=keys)
+                        w.writeheader()
+                        w.writerows(remaining)
+                    print(f">> [resume] Written {len(remaining)} queries to {resume_path}")
+                    for cp in config_paths:
+                        _parsed_configs[cp].setdefault("defaults", {})["query_file"] = str(resume_path)
+
         if run_profile_base is None:
             # Automatically use persistent profile for multi-session mode
             if sessions > 1:
