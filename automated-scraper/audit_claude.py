@@ -1849,14 +1849,41 @@ if __name__ == "__main__":
         clear_only = bool(args.clear_memory)
 
         if args.resume:
+            import csv as _csv
             cfg = _parsed_configs[config_paths[0]]
-            orig_query_file = cfg.get("defaults", {}).get("query_file") or \
-                              (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
-            if orig_query_file:
-                resolved_qf = str(BASE_DIR / orig_query_file) if not Path(orig_query_file).is_absolute() else orig_query_file
+            cfg_defaults = cfg.get("defaults", {}) if isinstance(cfg, dict) else {}
+            rotate_list = cfg_defaults.get("rotate_query_files")
+            single_qf = cfg_defaults.get("query_file") or \
+                        (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
+
+            if rotate_list and isinstance(rotate_list, list):
+                # Resume each file in the rotation list independently
+                new_rotate = []
+                any_resumed = False
+                for qf in rotate_list:
+                    resolved_qf = str((BASE_DIR / qf).resolve()) if not Path(qf).is_absolute() else qf
+                    remaining = find_resume_point(DATA_DIR, resolved_qf, config=cfg)
+                    all_queries = load_queries_from_file(resolved_qf)
+                    if remaining is not None and len(remaining) < len(all_queries):
+                        stem = Path(resolved_qf).stem
+                        resume_path = DATA_DIR / f"resume_cache_{stem}.csv"
+                        keys = list(remaining[0].keys()) if remaining and isinstance(remaining[0], dict) else ["id", "query"]
+                        with open(resume_path, "w", newline="", encoding="utf-8") as f:
+                            w = _csv.DictWriter(f, fieldnames=keys)
+                            w.writeheader()
+                            w.writerows(remaining)
+                        print(f">> [resume] Written {len(remaining)} queries to {resume_path}")
+                        new_rotate.append(str(resume_path))
+                        any_resumed = True
+                    else:
+                        new_rotate.append(qf)
+                if any_resumed:
+                    for cp in config_paths:
+                        _parsed_configs[cp].setdefault("defaults", {})["rotate_query_files"] = new_rotate
+            elif single_qf:
+                resolved_qf = str(BASE_DIR / single_qf) if not Path(single_qf).is_absolute() else single_qf
                 remaining = find_resume_point(DATA_DIR, resolved_qf, config=cfg)
                 if remaining is not None and len(remaining) < len(load_queries_from_file(resolved_qf)):
-                    import csv as _csv
                     resume_path = DATA_DIR / "resume_cache.csv"
                     keys = list(remaining[0].keys()) if remaining and isinstance(remaining[0], dict) else ["id", "query"]
                     with open(resume_path, "w", newline="", encoding="utf-8") as f:

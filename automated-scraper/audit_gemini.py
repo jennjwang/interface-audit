@@ -919,7 +919,7 @@ def save_response(output_dir, query_id, content, model_info, sent_at=None):
 
 
 def _api_barrier_worker(
-    query_file, runs, shuffle, seed,
+    query_files, runs, shuffle, seed,
     api_cfg, api_key,
     output_base,
     sync_barrier_info, stop_event,
@@ -934,31 +934,41 @@ def _api_barrier_worker(
     m_name = api_cfg["model"]
     m_params = {k: v for k, v in api_cfg.items() if k != "model"}
     m_dir = m_name + ("_" + "_".join(f"{k}-{v}" for k, v in sorted(m_params.items())) if m_params else "")
-    output_dir = Path(output_base) / m_dir
 
-    queries_base = load_queries_from_file(query_file)
-    if not queries_base:
+    # Build flat list of (query_dict, output_dir) across all query files.
+    # Multiple files get separate subdirectories (matching browser rotate behavior).
+    items = []
+    use_subdirs = len(query_files) > 1
+    for qf in query_files:
+        queries_base = load_queries_from_file(qf)
+        if not queries_base:
+            continue
+        if use_subdirs:
+            out_dir = Path(output_base) / _extract_benchmark_name(qf) / m_dir
+        else:
+            out_dir = Path(output_base) / m_dir
+        file_queries = []
+        for item in queries_base:
+            q_id = item.get("id") if isinstance(item, dict) else item[0]
+            q_text = item.get("query") if isinstance(item, dict) else item[1]
+            for r in range(runs):
+                file_queries.append({"id": f"{q_id}_run{r}", "query": q_text, "_out": out_dir})
+        if shuffle:
+            file_queries = shuffle_no_consecutive(file_queries, seed=seed)
+        items.extend(file_queries)
+
+    if not items:
         print(f">> [API {m_name}] No queries loaded. Exiting worker.")
         return
 
-    queries = []
-    for item in queries_base:
-        q_id = item.get("id") if isinstance(item, dict) else item[0]
-        q_text = item.get("query") if isinstance(item, dict) else item[1]
-        for r in range(runs):
-            queries.append({"id": f"{q_id}_run{r}", "query": q_text})
+    print(f">> [API {m_name}] Starting barrier worker with {len(items)} queries.")
 
-    if shuffle:
-        queries = shuffle_no_consecutive(queries, seed=seed)
-
-    print(f">> [API {m_name}] Starting barrier worker with {len(queries)} queries.")
-
-    for i, item in enumerate(queries):
+    for i, item in enumerate(items):
         if stop_event and stop_event.is_set():
             print(f">> [API {m_name}] Stop signal received. Halting.")
             return
 
-        print(f">> [API {m_name}] [{i+1}/{len(queries)}] Waiting at barrier...")
+        print(f">> [API {m_name}] [{i+1}/{len(items)}] Waiting at barrier...")
         barrier.wait()
 
         attempt = 0
@@ -967,7 +977,7 @@ def _api_barrier_worker(
                 return
             sent_at = datetime.now().isoformat()
             print(f">> [API {m_name}] Sending {item['id']} (attempt {attempt+1})...")
-            record = run_api_query(item["id"], item["query"], str(output_dir), m_name,
+            record = run_api_query(item["id"], item["query"], str(item["_out"]), m_name,
                                    sent_at=sent_at, api_key=api_key, **m_params)
             if not record.get("error"):
                 break
@@ -1594,6 +1604,8 @@ if __name__ == "__main__":
                         help="Model to select in Gemini UI (e.g. '2.5 Pro', 'Flash').")
     parser.add_argument("--output-tag", type=str, default=None,
                         help="Tag appended to run ID for output directories.")
+    parser.add_argument("--num-runs", type=int, default=None,
+                        help="Run the full experiment N times using a persistent browser session.")
     parser.add_argument("--repeat-every-hours", type=float, default=None,
                         help="Re-run the experiment every N hours indefinitely.")
     parser.add_argument("--resume", action="store_true",
@@ -1678,14 +1690,41 @@ if __name__ == "__main__":
         clear_only = bool(args.clear_memory)
 
         if args.resume:
+            import csv as _csv
             cfg = _parsed_configs[config_paths[0]]
-            orig_query_file = cfg.get("defaults", {}).get("query_file") or \
-                              (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
-            if orig_query_file:
-                resolved_qf = str(BASE_DIR / orig_query_file) if not Path(orig_query_file).is_absolute() else orig_query_file
+            cfg_defaults = cfg.get("defaults", {}) if isinstance(cfg, dict) else {}
+            rotate_list = cfg_defaults.get("rotate_query_files")
+            single_qf = cfg_defaults.get("query_file") or \
+                        (cfg.get("experiments", [{}])[0].get("query_file") if cfg.get("experiments") else None)
+
+            if rotate_list and isinstance(rotate_list, list):
+                # Resume each file in the rotation list independently
+                new_rotate = []
+                any_resumed = False
+                for qf in rotate_list:
+                    resolved_qf = str((BASE_DIR / qf).resolve()) if not Path(qf).is_absolute() else qf
+                    remaining = find_resume_point(DATA_DIR, resolved_qf, config=cfg)
+                    all_queries = load_queries_from_file(resolved_qf)
+                    if remaining is not None and len(remaining) < len(all_queries):
+                        stem = Path(resolved_qf).stem
+                        resume_path = DATA_DIR / f"resume_cache_{stem}.csv"
+                        keys = list(remaining[0].keys()) if remaining and isinstance(remaining[0], dict) else ["id", "query"]
+                        with open(resume_path, "w", newline="", encoding="utf-8") as f:
+                            w = _csv.DictWriter(f, fieldnames=keys)
+                            w.writeheader()
+                            w.writerows(remaining)
+                        print(f">> [resume] Written {len(remaining)} queries to {resume_path}")
+                        new_rotate.append(str(resume_path))
+                        any_resumed = True
+                    else:
+                        new_rotate.append(qf)
+                if any_resumed:
+                    for cp in config_paths:
+                        _parsed_configs[cp].setdefault("defaults", {})["rotate_query_files"] = new_rotate
+            elif single_qf:
+                resolved_qf = str(BASE_DIR / single_qf) if not Path(single_qf).is_absolute() else single_qf
                 remaining = find_resume_point(DATA_DIR, resolved_qf, config=cfg)
                 if remaining is not None and len(remaining) < len(load_queries_from_file(resolved_qf)):
-                    import csv as _csv
                     resume_path = DATA_DIR / "resume_cache.csv"
                     keys = list(remaining[0].keys()) if remaining and isinstance(remaining[0], dict) else ["id", "query"]
                     with open(resume_path, "w", newline="", encoding="utf-8") as f:
@@ -1848,7 +1887,14 @@ if __name__ == "__main__":
         # barrier participant, so browser + API requests fire simultaneously).
         if n_api_workers > 0 and sync_barrier_info:
             defaults_cfg = _pre_config.get("defaults", {}) if isinstance(_pre_config, dict) else {}
-            api_query_file = defaults_cfg.get("query_file")
+            _single = defaults_cfg.get("query_file")
+            _rotate = defaults_cfg.get("rotate_query_files")
+            if _single:
+                api_query_files = [str(_single)]
+            elif _rotate and isinstance(_rotate, list):
+                api_query_files = [str(f) for f in _rotate]
+            else:
+                api_query_files = []
             api_runs = int(defaults_cfg.get("runs", 1))
             api_shuffle = bool(defaults_cfg.get("shuffle", False))
             api_output_base = DATA_DIR / "api" / run_id
@@ -1861,7 +1907,7 @@ if __name__ == "__main__":
                     "session_id": api_sid,
                 }
                 p = mp.Process(target=_api_barrier_worker, kwargs={
-                    "query_file": api_query_file,
+                    "query_files": api_query_files,
                     "runs": api_runs,
                     "shuffle": api_shuffle,
                     "seed": seed_override,
@@ -1886,9 +1932,15 @@ if __name__ == "__main__":
         if not args.no_parse and not clear_only:
             _auto_parse(run_id)
 
+    _top_defaults = _pre_config.get("defaults", {}) if isinstance(_pre_config, dict) else {}
+    num_runs = int(args.num_runs or _top_defaults.get("num_runs", 1))
+    repeat_hours = float(args.repeat_every_hours or 0)
+    repeat_seconds = max(1.0, repeat_hours * 3600.0) if repeat_hours > 0 else 0
+    use_persistent = repeat_hours > 0 or num_runs > 1
+
     profile_base_path = Path(args.profile_base) if args.profile_base else None
-    if args.repeat_every_hours:
-        interval = args.repeat_every_hours * 3600
+    persistent_pages = None
+    if use_persistent:
         repeat_profile_base = profile_base_path or DATA_DIR / "chrome_profiles_gemini" / "default_multi_session"
         persistent_pages = []
         for sid in range(sessions):
@@ -1900,11 +1952,25 @@ if __name__ == "__main__":
             co.set_argument("--no-first-run")
             co.set_argument("--mute-audio")
             persistent_pages.append(ChromiumPage(co))
-        print(f">> Created {sessions} persistent ChromiumPage instances for repeat mode.")
-        run_once(delay_seconds, repeat_profile_base, True, persistent_pages=persistent_pages)
-        while True:
-            print(f"\n>> Waiting {args.repeat_every_hours}h before next run...")
-            time.sleep(interval)
-            run_once(0, repeat_profile_base, False, persistent_pages=persistent_pages)
+        print(f">> Created {sessions} persistent ChromiumPage instances.")
     else:
-        run_once(delay_seconds, profile_base_path, True)
+        repeat_profile_base = profile_base_path
+
+    run_count = 0
+    first_run = True
+    while True:
+        allow_manual = bool(args.allow_manual_login) or first_run
+        run_once(delay_seconds if first_run else 0, repeat_profile_base, allow_manual,
+                 persistent_pages=persistent_pages)
+        run_count += 1
+        first_run = False
+
+        if num_runs > 1 and run_count >= num_runs:
+            print(f">> Completed {run_count}/{num_runs} runs. Done.")
+            break
+
+        if repeat_hours <= 0 and num_runs <= 1:
+            break
+
+        print(f"\n>> Run {run_count} complete. Sleeping {repeat_seconds:.0f}s before next run...")
+        time.sleep(repeat_seconds)
