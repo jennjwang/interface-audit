@@ -1132,8 +1132,14 @@ def _api_barrier_worker(
     api_cfg, api_key,
     output_base,
     sync_barrier_info, stop_event,
+    log_file=None,
 ):
     """Standalone API worker that participates in the per-query send barrier."""
+    if log_file:
+        import sys as _sys
+        _lh = open(log_file, "w", buffering=1, encoding="utf-8")
+        _sys.stdout = _lh
+        _sys.stderr = _lh
     barrier = FileBasedBarrier(
         parties=sync_barrier_info["parties"],
         sync_dir=sync_barrier_info["sync_dir"],
@@ -1988,10 +1994,13 @@ if __name__ == "__main__":
                     {}, cfg_defaults, rotate_slot=api_idx
                 )
                 if api_query_file and not Path(api_query_file).is_absolute():
-                    api_query_file = str(BASE_DIR / api_query_file)
+                    api_query_file = str((BASE_DIR / api_query_file).resolve())
+                print(f">> [API worker {api_idx}] query_file={api_query_file}")
                 api_sid = sessions + api_idx
                 api_bi = dict(sync_barrier_info)
                 api_bi["session_id"] = api_sid
+                api_log = DATA_DIR / "logs" / run_id / f"api_worker_{api_idx:02d}.log"
+                api_log.parent.mkdir(parents=True, exist_ok=True)
                 p = mp.Process(target=_api_barrier_worker, kwargs={
                     "query_file": api_query_file,
                     "runs": runs,
@@ -2002,6 +2011,7 @@ if __name__ == "__main__":
                     "output_base": str(api_output_base),
                     "sync_barrier_info": api_bi,
                     "stop_event": stop_event,
+                    "log_file": str(api_log),
                 })
                 p.start()
                 procs.append(p)
