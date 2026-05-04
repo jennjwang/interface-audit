@@ -1199,15 +1199,6 @@ def run_experiment(
         if is_mcq is None:
             is_mcq = "_mcq" in str(q_id or "").lower()
 
-        # Cross-session barrier: all sessions synchronize at the top of each query
-        if sync_barrier:
-            print(f">> [session {session_id}] Waiting at query barrier {i}...")
-            try:
-                sync_barrier.wait()
-                print(f">> [session {session_id}] All sessions at query {i+1}. Proceeding.")
-            except TimeoutError as e:
-                print(f">> Barrier timeout: {e} — proceeding anyway")
-
         # Skip if already saved — allows resuming an interrupted run
         _sid = "".join(c for c in str(q_id or "") if c.isalnum() or c in ("-", "_")).strip()
         if (output_dir / f"{_sid}.html").exists():
@@ -1256,6 +1247,15 @@ def run_experiment(
                 if not typed:
                     print(">> Failed to enter prompt. Skipping.")
                     skip_query = True
+
+            # Barrier: wait for all sessions to finish model selection before sending
+            if sync_barrier:
+                print(f">> [session {session_id}] Waiting at send barrier {i}...")
+                try:
+                    sync_barrier.wait()
+                    print(f">> [session {session_id}] All sessions ready to send query {i+1}.")
+                except Exception as e:
+                    print(f">> Send barrier wait failed ({e}) — proceeding anyway")
 
             sent_at = None
             if not skip_query:
