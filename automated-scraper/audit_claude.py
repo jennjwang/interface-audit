@@ -1109,18 +1109,8 @@ def _rotate_query_file(experiment, defaults, rotate_slot=None):
     return chosen, idx
 
 
-def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False, rotate_slot=None):
-    """Return query files in sequence for this experiment.
-
-    In sync multi-session mode (prefer_defaults_rotate=True, rotate_slot set),
-    each session picks exactly ONE file from the rotation list by slot index so
-    all sessions process the same number of queries and barrier counts match.
-    """
-    if prefer_defaults_rotate and rotate_slot is not None:
-        # Sync mode: pick a single file by slot (same as API workers)
-        chosen, _ = _rotate_query_file(experiment, defaults, rotate_slot=rotate_slot)
-        return [str(chosen)] if chosen else []
-
+def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False):
+    """Return query files in sequence for this experiment."""
     if prefer_defaults_rotate:
         rotate_list = defaults.get("rotate_query_files")
     else:
@@ -1134,7 +1124,7 @@ def _query_file_sequence(experiment, defaults, prefer_defaults_rotate=False, rot
 
 
 def _api_barrier_worker(
-    query_file, runs, shuffle, seed,
+    query_files, runs, shuffle, seed,
     api_cfg, api_key,
     output_base,
     sync_barrier_info, stop_event,
@@ -1155,19 +1145,25 @@ def _api_barrier_worker(
     m_name = api_cfg["model"]
     m_params = {k: v for k, v in api_cfg.items() if k != "model"}
     m_dir = m_name + ("_" + "_".join(f"{k}-{v}" for k, v in sorted(m_params.items())) if m_params else "")
-    output_dir = Path(output_base) / m_dir
 
-    queries_base = load_queries_from_file(query_file)
-    if not queries_base:
+    # Build flat query list across all files (mirrors browser session _query_file_sequence)
+    queries = []
+    use_subdirs = len(query_files) > 1
+    for qf in query_files:
+        queries_base = load_queries_from_file(qf)
+        if not queries_base:
+            continue
+        out_dir = Path(output_base) / (Path(qf).stem if use_subdirs else "") / m_dir if use_subdirs \
+            else Path(output_base) / m_dir
+        for item in queries_base:
+            q_id = item.get("id") if isinstance(item, dict) else item[0]
+            q_text = item.get("query") if isinstance(item, dict) else item[1]
+            for r in range(runs):
+                queries.append({"id": f"{q_id}_run{r}", "query": q_text, "_out": out_dir})
+
+    if not queries:
         print(f">> [API {m_name}] No queries loaded. Exiting worker.")
         return
-
-    queries = []
-    for item in queries_base:
-        q_id = item.get("id") if isinstance(item, dict) else item[0]
-        q_text = item.get("query") if isinstance(item, dict) else item[1]
-        for r in range(runs):
-            queries.append({"id": f"{q_id}_run{r}", "query": q_text})
 
     if shuffle:
         queries = shuffle_no_consecutive(queries, seed=seed)
@@ -1188,7 +1184,7 @@ def _api_barrier_worker(
                 return
             sent_at = datetime.now().isoformat()
             print(f">> [API {m_name}] Sending {item['id']} (attempt {attempt+1})...")
-            record = run_api_query(item["id"], item["query"], str(output_dir), m_name,
+            record = run_api_query(item["id"], item["query"], str(item["_out"]), m_name,
                                    sent_at=sent_at, api_key=api_key, **m_params)
             if not record.get("error"):
                 break
@@ -1555,7 +1551,6 @@ def run_audit(
                     experiment,
                     defaults,
                     prefer_defaults_rotate=experiment_index is not None,
-                    rotate_slot=experiment_index,
                 )
                 for file_idx, qf in enumerate(query_files):
                     if len(query_files) > 1:
@@ -1666,7 +1661,6 @@ def run_audit(
                     exp,
                     defaults,
                     prefer_defaults_rotate=experiment_index is not None,
-                    rotate_slot=experiment_index,
                 )
                 if not query_files:
                     print(f">> No query file configured for experiment '{exp.get('name', 'experiment')}'. Skipping.")
@@ -1996,21 +1990,26 @@ if __name__ == "__main__":
             runs = int(cfg_defaults.get("runs", 1))
             shuffle = bool(cfg_defaults.get("shuffle", False))
             api_output_base = DATA_DIR / "api" / run_id
+            # All API workers get all query files (same as browser sessions via _query_file_sequence)
+            _single = cfg_defaults.get("query_file")
+            _rotate = cfg_defaults.get("rotate_query_files")
+            if _rotate and isinstance(_rotate, list):
+                api_query_files = [(BASE_DIR / f).resolve() if not Path(f).is_absolute() else Path(f)
+                                   for f in _rotate]
+                api_query_files = [str(f) for f in api_query_files]
+            elif _single:
+                api_query_files = [str(_single)]
+            else:
+                api_query_files = []
+            print(f">> [API workers] query_files={api_query_files}")
             for api_idx, api_cfg in enumerate(effective_api_models):
-                # Each API worker rotates through query files the same way browser sessions do
-                api_query_file, _ = _rotate_query_file(
-                    {}, cfg_defaults, rotate_slot=api_idx
-                )
-                if api_query_file and not Path(api_query_file).is_absolute():
-                    api_query_file = str((BASE_DIR / api_query_file).resolve())
-                print(f">> [API worker {api_idx}] query_file={api_query_file}")
                 api_sid = sessions + api_idx
                 api_bi = dict(sync_barrier_info)
                 api_bi["session_id"] = api_sid
                 api_log = DATA_DIR / "logs" / run_id / f"api_worker_{api_idx:02d}.log"
                 api_log.parent.mkdir(parents=True, exist_ok=True)
                 p = mp.Process(target=_api_barrier_worker, kwargs={
-                    "query_file": api_query_file,
+                    "query_files": api_query_files,
                     "runs": runs,
                     "shuffle": shuffle,
                     "seed": seed_override,
