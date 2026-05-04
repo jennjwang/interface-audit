@@ -1362,7 +1362,8 @@ def run_experiment(
             traceback.print_exc()
             print(">> Continuing to next query.")
         finally:
-            pass  # API threads are daemon threads — they complete independently
+            for t in api_threads:
+                t.join()
 
         # Wait between queries (skip if configured to 0)
         if isinstance(wait_after_saves, list) and len(wait_after_saves) == 2:
