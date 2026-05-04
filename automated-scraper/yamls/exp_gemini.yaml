@@ -1,12 +1,6 @@
 defaults:
   # rotate_query_files:
-  #   - ../experiments/aa-omniscience/queries.csv
-  # - ../experiments/bbq/queries.csv
-  # - ../experiments/metabench-gsm8k/queries/queries_from_229.csv
-  # - ../experiments/metabench-truthfulQA/queries/queries_from_72.csv
-  # - ../experiments/metabench-gsm8k/queries/queries_from_158.csv
-  # query_file: ../experiments/metabench-gsm8k/queries/queries_from_229.csv
-  query_file: ../experiments/bbq/queries.csv
+  query_file: ../benchmark_creation/results/aa-omniscience-subset-200-from-287.csv
   runs: 1
   shuffle: false
   fast: true
