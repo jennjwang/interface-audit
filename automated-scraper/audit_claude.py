@@ -679,6 +679,33 @@ def ensure_new_chat(page, attempts=3):
     return False
 
 
+def disable_web_search(page):
+    """Open the attachments/tools menu and uncheck Web search if it is enabled."""
+    try:
+        btn = page.ele('css:button[aria-label="Add files, connectors, and more"]', timeout=5)
+        if not btn:
+            return
+        btn.click()
+        item = page.ele('css:div[role="menuitemcheckbox"]', timeout=3)
+        if not item:
+            # close menu and return
+            try:
+                page.actions.key_down("Escape").key_up("Escape")
+            except Exception:
+                pass
+            return
+        if item.attr('aria-checked') == 'true':
+            item.click()
+            print(">> Web search disabled.")
+        else:
+            try:
+                page.actions.key_down("Escape").key_up("Escape")
+            except Exception:
+                pass
+    except Exception as e:
+        print(f">> disable_web_search error: {e}")
+
+
 # ── Prompt input selector ─────────────────────────────────────────────────────
 
 def _find_prompt_input(page, timeout=8):
@@ -1253,6 +1280,7 @@ def run_experiment(
             # Open a new chat when not reusing
             if not effective_reuse:
                 ensure_new_chat(page)
+                disable_web_search(page)
                 if interface_model:
                     select_interface_model(page, interface_model)
             prev_reuse = effective_reuse
@@ -1340,6 +1368,7 @@ def run_experiment(
                     if elapsed > wait_timeout:
                         print(f">> Timed out after {wait_timeout}s. Re-sending...")
                         ensure_new_chat(page)
+                        disable_web_search(page)
                         if interface_model:
                             select_interface_model(page, interface_model)
                         prompt_input = _find_prompt_input(page)
