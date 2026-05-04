@@ -573,7 +573,6 @@ def _model_matches(model_name, text):
 def select_interface_model(page, model_name, timeout=8):
     """Select a Claude model from the model picker (if available)."""
     try:
-        time.sleep(2)
         # Find the model picker button via text content, then walk up to the button
         picker = None
         for label in ('Sonnet', 'Opus', 'Haiku'):
