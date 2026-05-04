@@ -684,17 +684,25 @@ def disable_web_search(page):
     try:
         btn = page.ele('css:button[aria-label="Add files, connectors, and more"]', timeout=5)
         if not btn:
+            print(">> disable_web_search: menu button not found")
             return
         btn.click()
-        item = page.ele('css:div[role="menuitemcheckbox"]', timeout=3)
+        # Find Web search item specifically by text among all checkboxes
+        item = None
+        for candidate in page.eles('css:div[role="menuitemcheckbox"]', timeout=3):
+            if 'web search' in (candidate.text or '').lower():
+                item = candidate
+                break
         if not item:
-            # close menu and return
+            print(">> disable_web_search: Web search item not found in menu")
             try:
                 page.actions.key_down("Escape").key_up("Escape")
             except Exception:
                 pass
             return
-        if item.attr('aria-checked') == 'true':
+        checked = item.attr('aria-checked')
+        print(f">> Web search checked={checked}")
+        if checked == 'true':
             item.click()
             print(">> Web search disabled.")
         else:
@@ -1971,8 +1979,14 @@ if __name__ == "__main__":
         if n_api_workers > 0 and sync_barrier_info:
             cfg = _parsed_configs[config_paths[0]]
             cfg_defaults = cfg.get("defaults", {}) if isinstance(cfg, dict) else {}
-            query_file = cfg_defaults.get("query_file") or \
-                         (cfg.get("experiments", [{}])[0].get("query_file") if isinstance(cfg, dict) else None)
+            rotate_list = cfg_defaults.get("rotate_query_files")
+            if rotate_list and isinstance(rotate_list, list):
+                # Use the first file in the rotation list for API workers
+                # (all API workers use the same combined query set)
+                query_file = str(BASE_DIR / rotate_list[0]) if not Path(rotate_list[0]).is_absolute() else rotate_list[0]
+            else:
+                query_file = cfg_defaults.get("query_file") or \
+                             (cfg.get("experiments", [{}])[0].get("query_file") if isinstance(cfg, dict) else None)
             runs = int(cfg_defaults.get("runs", 1))
             shuffle = bool(cfg_defaults.get("shuffle", False))
             api_output_base = DATA_DIR / "api" / run_id
