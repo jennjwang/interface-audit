@@ -53,11 +53,22 @@ BENCH_META = {
 METABENCH = REPO / "experiments" / "metabench"
 
 MC_JUDGE_SYSTEM = (
-    "You are extracting the answer letter from a model's response to a "
-    "multiple-choice question. The response may contain meta-commentary, "
-    "document summaries, or clarifying menus — focus ONLY on which answer "
-    "letter the model ultimately selected for the actual question. "
-    "Output a single uppercase letter (A, B, C, D, E, F, G, H, or I) or NONE."
+    "You are extracting the answer letter (A–I) from a model's response to a "
+    "multiple-choice question.\n\n"
+    "Output rules:\n"
+    "1. If the model clearly selected ONE option — either by stating the "
+    "letter (e.g. 'Answer: B') or by stating or paraphrasing the text of one "
+    "of the options — output the single uppercase letter for that option.\n"
+    "2. If the model did not answer the actual question — e.g. it asked the "
+    "user for clarification, refused, summarized instead, or wrote free text "
+    "that does not select any of the lettered options — output NONE.\n"
+    "3. If the model gave a ranked or ordered list of multiple letters "
+    "(e.g. 'C, D, A, B' or 'The correct order is D, C, A, B'), output NONE — "
+    "an ordering is not a single selection.\n"
+    "4. Ignore letters appearing in clarifying menus, document summaries, or "
+    "explanations of why OTHER options are wrong. Focus on the FINAL chosen "
+    "answer.\n\n"
+    "Output ONLY the single letter or the word NONE — nothing else."
 )
 
 GSM_JUDGE_SYSTEM = (
@@ -257,9 +268,15 @@ def write_csv(csv_path: Path, fieldnames: list, rows: list,
 
 # ── Discovery ──────────────────────────────────────────────────────────────
 
-def find_interface_csvs(bench_filter: str | None,
-                        provider_filter: str | None) -> list[tuple[Path, str, str]]:
-    """Return list of (csv_path, bench_slug, task)."""
+def find_csvs(bench_filter: str | None,
+              provider_filter: str | None,
+              kinds: set[str],
+              ts_filter: str | None = None) -> list[tuple[Path, str, str]]:
+    """Return list of (csv_path, bench_slug, task).
+
+    kinds: subset of {"interface", "api"}.
+    ts_filter: optional substring; only timestamps containing it are kept.
+    """
     results = []
     for bench_slug, meta in BENCH_META.items():
         if bench_filter and bench_filter.lower() != bench_slug:
@@ -277,17 +294,50 @@ def find_interface_csvs(bench_filter: str | None,
             if provider_filter:
                 if provider_filter.lower() not in provider_dir.name.lower():
                     continue
-            iface_root = provider_dir / "interface"
-            if not iface_root.exists():
-                continue
-            for csv_path in sorted(iface_root.rglob("*.csv")):
-                if "score_per" in csv_path.name or "joint_var" in csv_path.name:
+            for kind in sorted(kinds):
+                kind_root = provider_dir / kind
+                if not kind_root.exists():
                     continue
-                results.append((csv_path, bench_slug, meta["task"]))
+                for csv_path in sorted(kind_root.rglob("*.csv")):
+                    if "score_per" in csv_path.name or "joint_var" in csv_path.name:
+                        continue
+                    if ts_filter:
+                        # The timestamp dir is the child of kind_root.
+                        try:
+                            ts_dir = csv_path.relative_to(kind_root).parts[0]
+                        except ValueError:
+                            ts_dir = ""
+                        if ts_filter not in ts_dir:
+                            continue
+                    results.append((csv_path, bench_slug, meta["task"]))
     return results
 
 
+# Backwards-compatible alias for the previous interface-only entry point.
+def find_interface_csvs(bench_filter, provider_filter):
+    return find_csvs(bench_filter, provider_filter, kinds={"interface"})
+
+
 # ── Batch polling / writing ─────────────────────────────────────────────────
+
+def _retry(fn, *, what: str, max_attempts: int = 8, backoff: float = 5.0):
+    """Call fn() with retries on network/connection errors. Returns fn's result."""
+    from openai import APIConnectionError, APITimeoutError
+    import httpx
+    transient = (APIConnectionError, APITimeoutError,
+                 httpx.ConnectError, httpx.ReadTimeout, httpx.RemoteProtocolError,
+                 ConnectionError, OSError)
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return fn()
+        except transient as exc:
+            if attempt == max_attempts:
+                raise
+            delay = backoff * attempt
+            print(f"  [retry {attempt}/{max_attempts}] {what}: {type(exc).__name__}: {exc}; "
+                  f"sleeping {delay:.0f}s", flush=True)
+            time.sleep(delay)
+
 
 def poll_and_write(client: OpenAI, batch_id: str,
                    csv_meta: list, gold_cache: dict,
@@ -296,7 +346,8 @@ def poll_and_write(client: OpenAI, batch_id: str,
     """Poll until batch completes, then parse results and write CSVs."""
     print(f"Polling batch {batch_id}...", flush=True)
     while True:
-        batch = client.batches.retrieve(batch_id)
+        batch = _retry(lambda: client.batches.retrieve(batch_id),
+                       what="batches.retrieve")
         counts = batch.request_counts
         print(f"  status={batch.status}  "
               f"completed={counts.completed}/{counts.total}  "
@@ -309,7 +360,8 @@ def poll_and_write(client: OpenAI, batch_id: str,
         raise SystemExit(f"Batch ended with status: {batch.status}")
 
     # Download and parse results
-    raw = client.files.content(batch.output_file_id).text
+    raw = _retry(lambda: client.files.content(batch.output_file_id).text,
+                 what="files.content")
     verdicts: dict[int, dict[str, str]] = {i: {} for i in range(len(csv_meta))}
     for line in raw.splitlines():
         if not line.strip():
@@ -365,18 +417,27 @@ def main() -> None:
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--bench",    default=None, help="Filter to one benchmark")
     ap.add_argument("--provider", default=None, help="Filter to one provider")
+    ap.add_argument("--kinds",    default="interface",
+                    help="Comma-separated subset of {interface, api}")
+    ap.add_argument("--ts-filter", default=None,
+                    help="Only process timestamps containing this substring (e.g. 2026-05-24)")
     ap.add_argument("--dry-run",  action="store_true")
     ap.add_argument("--poll",     default=None, metavar="BATCH_ID",
                     help="Resume: poll existing batch ID and write results")
     args = ap.parse_args()
+    kinds = {k.strip().lower() for k in args.kinds.split(",") if k.strip()}
+    unknown = kinds - {"interface", "api"}
+    if unknown:
+        raise SystemExit(f"Unknown --kinds entry: {unknown}")
 
     api_key = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
     if not api_key:
         raise SystemExit("OPENAI_KEY not set")
     client = OpenAI(api_key=api_key, timeout=60)
 
-    csvs = find_interface_csvs(args.bench, args.provider)
-    print(f"Found {len(csvs)} interface CSVs", flush=True)
+    csvs = find_csvs(args.bench, args.provider, kinds, ts_filter=args.ts_filter)
+    print(f"Found {len(csvs)} CSVs (kinds={sorted(kinds)}, "
+          f"ts_filter={args.ts_filter!r})", flush=True)
 
     # Pre-load gold
     gold_cache: dict[str, dict] = {}
