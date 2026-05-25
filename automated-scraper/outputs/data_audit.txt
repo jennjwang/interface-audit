@@ -4,9 +4,11 @@ Generated: 2026-05-24 (updated 2026-05-24)
 
 OVERVIEW
 --------
-We ran 4–8 independent scraping sessions per benchmark per provider, each with
+We ran 5 independent scraping sessions per benchmark per provider, each with
 both an API condition (direct model call) and an Interface condition (model
 accessed through its web UI). The gap of interest is Interface − API accuracy.
+GSM8K uses 4 runs per provider (see item 5). openllm_leaderboard.py selects
+the first 5 complete timestamps (all conditions present) per benchmark.
 
 All data is scored with simple answer extraction (last numeric token for GSM8K,
 letter extraction for MCQ benchmarks), except HellaSwag Claude Haiku interface
@@ -100,12 +102,103 @@ DATA QUALITY ISSUES FIXED THIS SESSION
    (primarily ChatGPT Instant API: ~88% extraction rate). The gap table below
    reflects the updated values (recomputed after this change).
 
+7. May-24 HellaSwag Interface + API rescored via LLM judge (2026-05-24)
+
+   All 32 May-24 hellaswag CSVs (2,976 items) were re-judged via
+   gpt-4o-mini batch through automated-scraper/rescore_all_interface.py
+   (extended to support --kinds interface,api and --ts-filter). The
+   updated MC_JUDGE_SYSTEM prompt explicitly handles: (a) letter answers,
+   (b) text-matched answers (model paraphrases option content), (c)
+   NONE for clarifying questions / orderings / free-text non-answers.
+   Per-condition NONE counts after rescore (out of 93/run):
+     Claude Haiku Interface: 0/run
+     Claude Haiku API:       2–3/run (long reasoning, no clear pick)
+     ChatGPT Instant IFC:    0/run
+     ChatGPT Thinking IFC:   0/run
+     ChatGPT Instant API:    11–16/run (model gave orderings or asked
+                             for clarification — correctly NONE)
+     ChatGPT Thinking API:   1–3/run
+   Total: 88 NONE / 2976. Cost: ~$0.15 batch API.
+
+8. BBQ now uses LLM judge (2026-05-24)
+
+   experiments/analysis/build_intersected_comparison.py: BBQ scoring
+   changed from regex-only to gpt-4o-mini judge with the same
+   context-aware prompt pattern as aa-omniscience. Judge maps each
+   response to A/B/C/NONE; "extracted" = letter is A/B/C, "correct" =
+   letter == gold. Cache persists at experiments/plots/
+   bbq_judgments_cache.json. Falls back to regex when --skip-bbq-judge
+   is passed. Re-running build_intersected_comparison.py will reproduce
+   intersected_comparison.csv with the new BBQ scores.
+
+
+PENDING REGENERATIONS
+---------------------
+After items 5–8 above, the following derived artifacts need to be
+regenerated to reflect current data:
+
+1. Metabench coverage CSVs (need openllm_leaderboard.py rerun):
+     experiments/metabench/openllm_leaderboard/plots/coverage_by_run.csv
+     experiments/metabench/openllm_leaderboard/plots/coverage_by_run_claude.csv
+     experiments/metabench/openllm_leaderboard/plots/coverage_by_run_gemini.csv
+   Required because: (a) GSM8K 4-run cap (item 5), (b) HellaSwag
+   correct/answered denominator (item 6), (c) May-24 hellaswag re-runs
+   not yet aggregated (item 7).
+
+2. Custom benchmark aggregate (need build_intersected_comparison.py rerun):
+     experiments/plots/intersected_comparison.csv
+     experiments/plots/intersected_comparison_filtered.csv
+   Required because: BBQ now LLM-judged (item 8) — old values were
+   regex-only.
+
+3. Paper-level CSVs that depend on the above (rebuild after 1 + 2):
+     paper/tables/appendix_full_capability.csv  (no in-repo producer —
+       see COVERAGE SOURCES note above)
+     paper/tables/appendix_extractability.csv   (rerun
+       paper/tables/compute_extractability.py)
+     paper/tables/appendix_test_retest_agreement.csv (rerun
+       paper/tables/compute_test_retest.py)
+     paper/tables/item_correlation_tau_table.tex / item_tau_heatmap.*
+       (rerun paper/tables/compute_item_correlation.py)
+     paper/tables/aggregate_accuracy*.csv  (rerun the aggregate-bars
+       scripts in paper/scripts/)
+   The gap table at line ~270 below is also stale (computed before
+   items 5–8); regenerate after rerunning the above.
+
 
 COVERAGE SOURCES
 ----------------
-Claude:   experiments/metabench/openllm_leaderboard/plots/coverage_by_run_claude.csv
-ChatGPT:  experiments/metabench/openllm_leaderboard/plots/coverage_by_run.csv
-Gemini:   experiments/metabench/openllm_leaderboard/plots/coverage_by_run_gemini.csv
+Metabench (ARC, GSM8K, HellaSwag, MMLU, TruthfulQA, WinoGrande):
+  Claude:   experiments/metabench/openllm_leaderboard/plots/coverage_by_run_claude.csv
+  ChatGPT:  experiments/metabench/openllm_leaderboard/plots/coverage_by_run.csv
+  Gemini:   experiments/metabench/openllm_leaderboard/plots/coverage_by_run_gemini.csv
+  Producer: experiments/metabench/openllm_leaderboard/openllm_leaderboard.py
+            (auto-discovers metabench-*/ benchmarks; emits one row per
+             complete-run timestamp per (condition, dataset).)
+
+Custom benchmarks (BBQ, AA-Omniscience, Elephant-Flip, Elephant-OG):
+  All:      experiments/plots/intersected_comparison.csv
+  Filtered: experiments/plots/intersected_comparison_filtered.csv
+            (drops rows where n_intersected < expected count: BBQ/AA-Omni=200,
+             Elephant=100.)
+  Producer: experiments/analysis/build_intersected_comparison.py
+            (BBQ uses gpt-4o-mini LLM judge with cache at
+             experiments/plots/bbq_judgments_cache.json;
+             AA-Omni uses gpt-4o-mini judge with cache at
+             experiments/plots/aa_omni_judgments_cache.json;
+             Elephant uses regex YTA/NTA detection in first 30 chars.)
+
+Both producers can be re-run from the raw response JSONs. Coverage CSVs
+must be regenerated after adding new runs or changing the extractor —
+see "PENDING REGENERATIONS" below.
+
+Aggregation into the capability table (paper/tables/appendix_full_capability.csv)
+is NOT in-repo; the file is consumed by paper/scripts/{plot_aggregate_*,
+bh_correct_capability,plot_capability_deltas_heatmap}.py and paper/tables/
+compute_{extractability,item_correlation,test_retest}.py but no script in
+the tree writes it. Reconstructing it requires the two coverage CSVs above
+plus the same first-5-complete-runs (extract ≥ 0.90) filter as
+paper/tables/compute_extractability.py.
 
 Model mapping:
   Claude:   session_00 = Haiku (claude-haiku-4-5-20251001)
@@ -121,11 +214,8 @@ RUN INVENTORY
 -------------
 One row per scraping session (timestamp). Each session contributes data for all
 conditions run in parallel (Interface + API). Timestamps are the directory names
-in the raw data.
-
-Note on Claude HellaSwag: Interface: Haiku uses only the 6 May-24 runs (wrap_mcq).
-API: Haiku uses all 11 (5 March + 6 May-24). Interface/API Sonnet and Opus use the
-5 March runs only.
+in the raw data. This list reflects what openllm_leaderboard.py actually uses
+(first 5 complete timestamps per benchmark; 4 for GSM8K).
 
 --- CLAUDE ---
 
@@ -136,28 +226,33 @@ arc (5 runs — all conditions same timestamps):
   2026-03-14_14-34-43
   2026-03-14_19-23-28
 
-gsm8k (4 runs used — all conditions same timestamps; 6 on disk, last 2 dropped):
+gsm8k (4 runs — all conditions same timestamps; later runs on disk not used):
   2026-03-12_23-08-48
   2026-03-13_04-08-58
   2026-03-13_11-59-25
   2026-03-13_23-21-09
-  [2026-03-14_06-56-45_plus_11-55-31-gsm8k — excluded, run 5]
-  [2026-03-14_19-23-28 — excluded, run 6]
 
-hellaswag — Interface: Haiku only (6 runs, wrap_mcq):
-  2026-05-24_00-37-27-hellaswag
-  2026-05-24_00-50-03-hellaswag
-  2026-05-24_00-50-33-hellaswag
-  2026-05-24_01-42-03-hellaswag
-  2026-05-24_01-57-31-hellaswag
-  2026-05-24_02-06-55-hellaswag
+hellaswag — STALE; current coverage_by_run_claude.csv still lists the
+  March runs below (all of which were excluded per item 2). The active
+  data on disk are the 6 May-24 Haiku-only re-runs listed beneath.
+  Coverage CSV needs regeneration via openllm_leaderboard.py.
 
-hellaswag — Interface/API Sonnet & Opus + API Haiku (5 March runs):
-  2026-03-10_22-46-39-claude-hellaswag
-  2026-03-11_17-44-27-claude-hellaswag
-  2026-03-11_23-25-26-claude-hellaswag
-  2026-03-14_19-23-28
-  2026-03-18_11-27-56-claude-hellaswag
+  March 2026 runs (now excluded, retained for audit traceability):
+    2026-03-10_22-46-39-claude-hellaswag
+    2026-03-11_17-44-27-claude-hellaswag
+    2026-03-11_23-25-26-claude-hellaswag
+    2026-03-14_19-23-28
+    2026-03-18_11-27-56-claude-hellaswag
+
+  May-24 replacement runs (Haiku Interface + API; wrap_mcq=true;
+    Interface judged by rescore_all_interface.py MC judge — see item 7):
+    2026-05-24_00-37-27-hellaswag
+    2026-05-24_00-50-03-hellaswag
+    2026-05-24_00-50-33-hellaswag
+    2026-05-24_01-42-03-hellaswag
+    2026-05-24_01-57-31-hellaswag
+    2026-05-24_02-06-55-hellaswag
+  Note: 6 runs landed; openllm_leaderboard.py will keep the first 5.
 
 mmlu (5 runs — all conditions same timestamps):
   2026-03-09_22-44-11-claude-mmlu
@@ -173,14 +268,12 @@ truthfulQA (5 runs — all conditions same timestamps):
   2026-03-11_13-07-40-claude-truthfulQA
   2026-03-11_15-34-11-claude-truthfulQA
 
-winogrande (7 runs — all conditions same timestamps):
+winogrande (5 runs — all conditions same timestamps):
   2026-03-11_22-09-23-claude-winogrande
   2026-03-12_02-11-03
   2026-03-12_23-08-48
   2026-03-13_04-08-58
   2026-03-13_08-36-53
-  2026-03-13_11-59-25
-  2026-03-14_19-23-28
 
 --- CHATGPT ---
 
@@ -191,26 +284,63 @@ arc (5 runs — all conditions same timestamps):
   2026-03-07_05-27-41
   2026-03-07_09-38-24
 
-gsm8k (4 runs used — all conditions same timestamps; 5 on disk, last dropped):
+gsm8k (4 runs — all conditions same timestamps; later run on disk not used):
   2026-03-09_12-06-41
   2026-03-09_15-02-10
   2026-03-09_18-25-11
   2026-03-09_22-50-30
-  [2026-03-10_00-49-28 — excluded, run 5]
 
-hellaswag — Instant (5 runs, wrap_mcq):
-  2026-05-24_00-45-48-hellaswag
-  2026-05-24_00-53-01-hellaswag
-  2026-05-24_03-41-29-hellaswag
-  2026-05-24_03-50-28-hellaswag
-  2026-05-24_04-10-55-hellaswag
+hellaswag — STALE; current coverage_by_run.csv has no hellaswag rows
+  for ChatGPT (never aggregated post-March 7 dataset). The May-24
+  Interface + API re-runs below are the active data on disk and need
+  coverage_by_run.csv regeneration via openllm_leaderboard.py.
 
-hellaswag — Thinking (5 runs, wrap_mcq):
-  2026-05-24_00-43-29-hellaswag
-  2026-05-24_01-28-53-hellaswag
-  2026-05-24_01-54-18-hellaswag
-  2026-05-24_02-58-32-hellaswag
-  2026-05-24_05-13-37-hellaswag
+  March 7 runs (legacy; may or may not be retained — verify wrap_mcq
+  before keeping):
+    2026-03-07_13-09-25-hellaswag
+    2026-03-07_16-11-14-hellaswag
+    2026-03-07_18-27-08-hellaswag
+    2026-03-07_18-54-09-hellaswag
+    2026-03-07_23-12-22-hellaswag
+
+  May-24 replacement runs (wrap_mcq=true; rescored via
+    rescore_all_interface.py --kinds interface,api --ts-filter 2026-05-24):
+
+    Interface: Instant (5 timestamps):
+      2026-05-24_00-45-48-hellaswag (session_00 / instant.csv)
+      2026-05-24_00-53-01-hellaswag
+      2026-05-24_03-41-29-hellaswag
+      2026-05-24_03-50-28-hellaswag
+      2026-05-24_04-10-55-hellaswag
+
+    Interface: Thinking (5 timestamps; session_01 / thinking.csv):
+      2026-05-24_00-43-29-hellaswag
+      2026-05-24_01-28-53-hellaswag
+      2026-05-24_01-54-18-hellaswag
+      2026-05-24_02-58-32-hellaswag
+      2026-05-24_05-13-37-hellaswag
+
+    API: gpt-5.3-chat-latest (Instant, 5 timestamps; same timestamps
+    paired with Interface Instant above; session_03/):
+      2026-05-24_00-45-48-hellaswag
+      2026-05-24_00-53-01-hellaswag
+      2026-05-24_03-41-29-hellaswag
+      2026-05-24_03-50-28-hellaswag
+      2026-05-24_04-10-55-hellaswag
+
+    API: gpt-5.4 reasoning_effort=high (Thinking, 5 timestamps; paired
+    with Interface Thinking above; session_03/):
+      2026-05-24_00-43-29-hellaswag
+      2026-05-24_01-28-53-hellaswag
+      2026-05-24_01-54-18-hellaswag
+      2026-05-24_02-58-32-hellaswag
+      2026-05-24_05-13-37-hellaswag
+
+    Note: Each ChatGPT timestamp has exactly one model variant (Instant
+    OR Thinking), not both — unlike the Claude side where Haiku/Opus/
+    Sonnet share a timestamp. This means the "complete_run" definition
+    used by openllm_leaderboard.py (all condition labels present at a
+    timestamp) treats each ChatGPT model independently.
 
 mmlu (5 runs — all conditions same timestamps):
   2026-03-07_12-49-14-mmlu
@@ -235,31 +365,25 @@ winogrande (5 runs — all conditions same timestamps):
 
 --- GEMINI ---
 
-arc (7 runs — all conditions same timestamps):
+arc (5 runs — all conditions same timestamps):
   2026-03-12_22-42-00
   2026-03-13_12-09-29-gemini-arc
   2026-03-15_00-11-42
   2026-03-16_00-27-29
   2026-03-16_11-38-44
-  2026-03-16_22-35-39
-  2026-03-17_04-01-37
 
-gsm8k (4 runs used — all conditions same timestamps; 5 on disk, last dropped):
+gsm8k (4 runs — all conditions same timestamps; later run on disk not used):
   2026-03-14_14-41-04-gemini-gsm8k
   2026-03-14_19-21-47-gemini-gsm8k
   2026-03-16_02-07-15-gemini-gsm8k
   2026-03-16_17-10-03-gemini-gsm8k
-  [2026-03-16_23-47-51-gemini-gsm8k — excluded, run 5]
 
-hellaswag (8 runs — all conditions same timestamps):
+hellaswag (5 runs — all conditions same timestamps):
   2026-03-11_20-32-24-gemini-hellaswag
   2026-03-11_23-28-32-gemini-hellaswag
   2026-03-12_00-49-40-gemini-hellaswag
   2026-03-12_22-36-22-gemini-hellaswag
   2026-03-13_12-11-28-gemini-hellaswag
-  2026-03-13_18-06-30-gemini-hellaswag
-  2026-03-13_20-36-50-gemini-hellaswag
-  2026-03-14_08-42-39-gemini-hellaswag
 
 mmlu (5 runs — all conditions same timestamps):
   2026-03-10_16-25-01-gemini-mmlu
@@ -323,3 +447,45 @@ OVERALL MEAN
 ------------
 Mean Interface − API gap across all 42 (benchmark × model-condition) pairs: -2.1%
 (stale — recompute after regenerating coverage CSVs)
+
+
+BBQ / AA-OMNISCIENCE / ELEPHANT RUN INVENTORY
+----------------------------------------------
+Benchmarks: bbq (200q), aa-omni (200q), elephant-flip (100q), elephant-og (100q)
+
+Verified 2026-05-24 by counting run_* subdirs in experiments/{bench}/data/{provider}/{interface,api}/.
+Each run_i/ dir contains one complete pass (200 or 100 JSON files).
+"flat" = legacy merged files directly in the model dir (newest session wins on conflict).
+Per-session scraping history in run_status.md (through 2026-05-10, other machine).
+
+INTERFACE RUNS (experiments/{bench}/data/{provider}/interface/{model}/)
+
+  model            | bbq | aa-omni | elephant-og | elephant-flip
+  -----------------|-----|---------|-------------|---------------
+  claude/haiku     |  5  |    5    |      5      |      5
+  claude/sonnet    |  5  |    5    |      5      |      5
+  claude/opus      |  5  |    5    |      5      |      5
+  chatgpt/instant  |  5  |    5    |      5      |      5
+  chatgpt/thinking |  5  |    5    |      5      |      5
+  gemini/fast      |  5  |    5    |      5      |      5
+  gemini/thinking  |  5  |    5    |      5      |      5
+
+  Notes:
+  - All models have exactly 5 run_* subdirs (run_0..run_4) per benchmark.
+  - claude/haiku, sonnet; chatgpt/*; gemini/* also have 1 merged flat run
+    (200/100 files directly in model dir, legacy format).
+  - claude/opus has no legacy flat run (all 5 runs are subdirs).
+
+API RUNS (experiments/{bench}/data/{provider}/api/{model_dir}/)
+
+  model            | bbq | aa-omni | elephant-og | elephant-flip
+  -----------------|-----|---------|-------------|---------------
+  claude/haiku     |  5  |    5    |      5      |      5
+  claude/sonnet    |  5  |    5    |      5      |      5
+  claude/opus      |  5  |    5    |      5      |      5
+  chatgpt/instant  |  5  |    5    |      5      |      5
+  chatgpt/thinking |  5  |    5    |      5      |      5
+  gemini/fast      |  5  |    5    |      5      |      5
+  gemini/thinking  |  4* |    5    |      5      |      5
+
+  * gemini/thinking BBQ API: run_4 has 199/200 queries (1 missing). 4 complete + 1 near-complete.
