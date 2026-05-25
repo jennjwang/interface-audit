@@ -1,0 +1,8 @@
+model,api_mean,api_se,interface_mean,interface_se,gap,gap_se,n_benchmarks
+Claude Haiku,96.41,0.38,93.40,0.38,3.02,0.54,9
+Claude Sonnet,98.20,0.31,95.77,0.31,2.42,0.44,9
+Claude Opus,98.63,0.22,97.80,0.22,0.84,0.32,9
+Gemini 3 Fast,96.06,0.33,95.87,0.33,0.20,0.47,9
+Gemini 3 Thinking,95.60,0.33,95.02,0.33,0.57,0.47,9
+GPT 5.3 Instant,93.31,0.44,88.98,0.44,4.34,0.62,9
+GPT 5.4 Thinking,95.23,0.46,89.34,0.46,5.89,0.65,9

@@ -1,0 +1,64 @@
+model,benchmark,api_extract_pct,interface_extract_pct,api_runs,interface_runs
+GPT 5.3 Instant,ARC,100.00,100.00,5,5
+GPT 5.3 Instant,GSM8K,100.00,99.92,5,5
+GPT 5.3 Instant,HellaSwag,96.77,97.42,5,5
+GPT 5.3 Instant,MMLU,100.00,100.00,5,5
+GPT 5.3 Instant,TruthfulQA,100.00,99.48,5,5
+GPT 5.3 Instant,WinoGrande,100.00,100.00,5,5
+GPT 5.3 Instant,BBQ,98.80,97.00,5,5
+GPT 5.3 Instant,AA-Omniscience,100.00,100.00,5,5
+GPT 5.3 Instant,Elephant Flip,100.00,100.00,5,5
+GPT 5.4 Thinking,ARC,100.00,99.72,5,5
+GPT 5.4 Thinking,GSM8K,100.00,99.83,5,5
+GPT 5.4 Thinking,HellaSwag,98.71,99.14,5,5
+GPT 5.4 Thinking,MMLU,100.00,100.00,5,5
+GPT 5.4 Thinking,TruthfulQA,99.87,100.00,5,5
+GPT 5.4 Thinking,WinoGrande,100.00,99.85,5,5
+GPT 5.4 Thinking,BBQ,99.70,97.70,5,5
+GPT 5.4 Thinking,AA-Omniscience,100.00,100.00,5,5
+GPT 5.4 Thinking,Elephant Flip,100.00,100.00,5,5
+Claude Haiku,ARC,100.00,98.21,5,5
+Claude Haiku,GSM8K,100.00,100.00,5,5
+Claude Haiku,HellaSwag,100.00,100.00,5,5
+Claude Haiku,MMLU,100.00,100.00,5,5
+Claude Haiku,TruthfulQA,99.87,100.00,5,5
+Claude Haiku,WinoGrande,100.00,100.00,5,5
+Claude Haiku,BBQ,100.00,99.00,5,5
+Claude Haiku,AA-Omniscience,100.00,100.00,5,5
+Claude Haiku,Elephant Flip,100.00,100.00,5,5
+Claude Opus,ARC,100.00,99.72,5,5
+Claude Opus,GSM8K,100.00,100.00,5,5
+Claude Opus,HellaSwag,100.00,100.00,5,5
+Claude Opus,MMLU,100.00,100.00,5,5
+Claude Opus,TruthfulQA,99.74,100.00,5,5
+Claude Opus,WinoGrande,100.00,100.00,5,5
+Claude Opus,BBQ,100.00,99.80,5,5
+Claude Opus,AA-Omniscience,100.00,100.00,5,5
+Claude Opus,Elephant Flip,100.00,100.00,5,5
+Claude Sonnet,ARC,99.72,100.00,5,5
+Claude Sonnet,GSM8K,100.00,100.00,5,5
+Claude Sonnet,HellaSwag,100.00,95.70,5,5
+Claude Sonnet,MMLU,100.00,100.00,5,5
+Claude Sonnet,TruthfulQA,100.00,100.00,5,5
+Claude Sonnet,WinoGrande,98.80,100.00,5,5
+Claude Sonnet,BBQ,99.60,99.80,5,5
+Claude Sonnet,AA-Omniscience,100.00,100.00,5,5
+Claude Sonnet,Elephant Flip,100.00,100.00,5,5
+Gemini 3 Thinking,ARC,98.90,99.72,5,5
+Gemini 3 Thinking,GSM8K,99.91,99.83,5,5
+Gemini 3 Thinking,HellaSwag,98.49,99.14,5,5
+Gemini 3 Thinking,MMLU,100.00,100.00,5,5
+Gemini 3 Thinking,TruthfulQA,100.00,100.00,5,5
+Gemini 3 Thinking,WinoGrande,100.00,99.85,5,5
+Gemini 3 Thinking,BBQ,99.30,99.80,5,5
+Gemini 3 Thinking,AA-Omniscience,100.00,100.00,5,5
+Gemini 3 Thinking,Elephant Flip,100.00,100.00,5,5
+Gemini 3 Fast,ARC,99.72,99.72,5,5
+Gemini 3 Fast,GSM8K,99.39,100.00,5,5
+Gemini 3 Fast,HellaSwag,98.92,99.78,5,5
+Gemini 3 Fast,MMLU,100.00,100.00,5,5
+Gemini 3 Fast,TruthfulQA,99.74,99.87,5,5
+Gemini 3 Fast,WinoGrande,99.85,100.00,5,5
+Gemini 3 Fast,BBQ,99.80,99.90,5,5
+Gemini 3 Fast,AA-Omniscience,100.00,100.00,5,5
+Gemini 3 Fast,Elephant Flip,100.00,100.00,5,5
