@@ -1,3 +1,4 @@
+# --- envs / caches ---
 .venv/
 .venv_api/
 old_data/
@@ -14,3 +15,29 @@ __pycache__/
 .DS_Store
 .env
 .gitattributes
+
+# --- scraped run data (multi-GB; source of truth lives on disk, not in git) ---
+# raw_html/, parsed_json/, sync/, api/, logs/, judged/, memory_snapshots/
+chatgpt_data/
+claude_data/
+gemini_data/
+data/
+
+# --- browser scaffolding (regenerated on every run; never commit) ---
+**/chrome_profiles*/
+**/drission_tmp/
+
+# --- resume bookkeeping (per-run scratch state) ---
+resume_*.csv
+
+# --- generated artifacts under outputs/ ---
+# Generator .py and small .csv ARE committed; their rendered output is not.
+outputs/**/*.log
+outputs/**/*.html
+outputs/moral_sycophancy/
+outputs/moral_sycophancy_api/
+outputs/moral_sycophancy_interface/
+outputs/score_audit_opus46/
+outputs/item_correlation/
+outputs/sweep_bbq/
+outputs/sweep_hellaswag/
