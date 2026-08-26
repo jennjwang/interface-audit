@@ -44,7 +44,7 @@ read -p "Press Enter once logged in..."
 echo ""
 read -p "Press Enter to start (3 runs x 200 questions)..."
 
-exec python audit_chatgpt_layer2.py \
+exec python audit/audit_chatgpt_layer2.py \
   --configs "$YAML" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT" \

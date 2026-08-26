@@ -98,7 +98,7 @@ experiments:
     interface_model: instant
 EOF
 
-  python audit_chatgpt.py \
+  python audit/audit_chatgpt.py \
     --configs "$YAML" \
     --profile-base "$TMP_BASE" \
     --output-tag layer2-smoke-chatgpt-instant-bbq-session-$i

@@ -2,7 +2,7 @@
 # Minimum-viable test of the Layer 2 attach-mode wiring.
 # - 2 Chrome instances on ports 9222 / 9223
 # - Same account is fine (we're testing the mechanism, not variance)
-# - 2 BBQ queries via audit_chatgpt_layer2.py --attach-port-base
+# - 2 BBQ queries via audit/audit_chatgpt_layer2.py --attach-port-base
 
 set -e
 
@@ -47,7 +47,7 @@ echo "  attached to these existing Chromes via debug ports."
 echo "=================================================="
 read -p "Press Enter to launch..."
 
-exec python audit_chatgpt_layer2.py \
+exec python audit/audit_chatgpt_layer2.py \
   --configs yamls/layer2_mini_smoke_chatgpt.yaml \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \

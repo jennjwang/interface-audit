@@ -55,7 +55,7 @@ echo "  Verify all 3 are the same account."
 echo "=================================================="
 read -p "Press Enter to fire the parallel run (3 sessions, sync barrier)..."
 
-exec python audit_claude_layer2.py \
+exec python audit/audit_claude_layer2.py \
   --configs "$YAML" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \

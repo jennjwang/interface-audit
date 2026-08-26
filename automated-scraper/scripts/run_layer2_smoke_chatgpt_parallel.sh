@@ -32,7 +32,7 @@ echo "  (you should see 6 Chrome windows pop up at once)"
 echo "=================================================="
 echo ""
 
-exec python audit_chatgpt.py \
+exec python audit/audit_chatgpt.py \
   --configs yamls/layer2_smoke_chatgpt_instant_bbq.yaml \
   --profile-base "$BASE" \
   --output-tag layer2-smoke-chatgpt-instant-bbq

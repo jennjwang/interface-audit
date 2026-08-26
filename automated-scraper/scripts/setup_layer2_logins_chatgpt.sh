@@ -104,7 +104,7 @@ fi
 
 # 4) Sequential per-session smoke
 # We use a temp profile-base whose session_00 is a symlink to the real
-# session_NN, so audit_chatgpt.py operates on one specific session per run.
+# session_NN, so audit/audit_chatgpt.py operates on one specific session per run.
 TMP_ROOT="$(mktemp -d -t layer2_smoke)"
 TMP_YAML_DIR="$(mktemp -d -t layer2_smoke_yamls)"
 trap 'rm -rf "$TMP_ROOT" "$TMP_YAML_DIR"' EXIT
@@ -155,7 +155,7 @@ experiments:
     interface_model: instant
 EOF
 
-  python audit_chatgpt.py \
+  python audit/audit_chatgpt.py \
     --configs "$YAML" \
     --profile-base "$TMP_BASE" \
     --output-tag layer2-smoke-chatgpt-instant-bbq-session-$i

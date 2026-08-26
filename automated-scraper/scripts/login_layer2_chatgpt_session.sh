@@ -64,7 +64,7 @@ echo "  Sessions will start staggered: s1 now, s2 +${STAGGER}s, s3 +$((STAGGER*2
 echo "=================================================="
 read -p "Press Enter to fire staggered runs..."
 
-python audit_chatgpt_layer2.py \
+python audit/audit_chatgpt_layer2.py \
   --configs "$YAML_S1" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \
@@ -74,7 +74,7 @@ python audit_chatgpt_layer2.py \
   $RESUME_FLAG &
 
 sleep "$STAGGER"
-python audit_chatgpt_layer2.py \
+python audit/audit_chatgpt_layer2.py \
   --configs "$YAML_S2" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \
@@ -84,7 +84,7 @@ python audit_chatgpt_layer2.py \
   $RESUME_FLAG &
 
 sleep "$STAGGER"
-python audit_chatgpt_layer2.py \
+python audit/audit_chatgpt_layer2.py \
   --configs "$YAML_S3" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \

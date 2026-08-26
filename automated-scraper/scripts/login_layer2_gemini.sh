@@ -2,7 +2,7 @@
 # Layer 2 phase 1 — Gemini fast, login + parallel smoke, 3 sessions (one per account).
 #
 # Phase 1: sequential per-session logins. Chrome windows stay open after login.
-# Phase 2: parallel smoke via audit_gemini_layer2.py --attach-port-base.
+# Phase 2: parallel smoke via audit/audit_gemini_layer2.py --attach-port-base.
 #
 # Account mapping (3 accounts, 1 session each):
 #   session_00 -> account 1
@@ -74,7 +74,7 @@ echo "=================================================="
 read -p "Press Enter to fire the parallel smoke (attaches to these 3 Chromes)..."
 
 # Phase 2: parallel smoke, attaching to the 3 existing Chromes via debug ports.
-exec python audit_gemini_layer2.py \
+exec python audit/audit_gemini_layer2.py \
   --configs "$YAML" \
   --profile-base "$BASE" \
   --attach-port-base "$PORT_BASE" \

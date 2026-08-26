@@ -105,7 +105,7 @@ DATA QUALITY ISSUES FIXED THIS SESSION
 7. May-24 HellaSwag Interface + API rescored via LLM judge (2026-05-24)
 
    All 32 May-24 hellaswag CSVs (2,976 items) were re-judged via
-   gpt-4o-mini batch through automated-scraper/rescore_all_interface.py
+   gpt-4o-mini batch through automated-scraper/scoring/rescore_all_interface.py
    (extended to support --kinds interface,api and --ts-filter). The
    updated MC_JUDGE_SYSTEM prompt explicitly handles: (a) letter answers,
    (b) text-matched answers (model paraphrases option content), (c)
@@ -245,7 +245,7 @@ hellaswag — STALE; current coverage_by_run_claude.csv still lists the
     2026-03-18_11-27-56-claude-hellaswag
 
   May-24 replacement runs (Haiku Interface + API; wrap_mcq=true;
-    Interface judged by rescore_all_interface.py MC judge — see item 7):
+    Interface judged by scoring/rescore_all_interface.py MC judge — see item 7):
     2026-05-24_00-37-27-hellaswag
     2026-05-24_00-50-03-hellaswag
     2026-05-24_00-50-33-hellaswag
@@ -304,7 +304,7 @@ hellaswag — STALE; current coverage_by_run.csv has no hellaswag rows
     2026-03-07_23-12-22-hellaswag
 
   May-24 replacement runs (wrap_mcq=true; rescored via
-    rescore_all_interface.py --kinds interface,api --ts-filter 2026-05-24):
+    scoring/rescore_all_interface.py --kinds interface,api --ts-filter 2026-05-24):
 
     Interface: Instant (5 timestamps):
       2026-05-24_00-45-48-hellaswag (session_00 / instant.csv)

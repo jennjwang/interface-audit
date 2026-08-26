@@ -28,7 +28,7 @@ for i in 0 1 2; do
   echo "  YAML: ${YAML}"
   echo "=================================================="
 
-  python audit_chatgpt_layer2.py \
+  python audit/audit_chatgpt_layer2.py \
     --configs "$YAML" \
     --profile-base "$BASE" \
     --attach-port-base "$PORT_BASE" \
