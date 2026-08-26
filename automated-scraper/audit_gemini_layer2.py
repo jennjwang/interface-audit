@@ -527,20 +527,44 @@ def _maybe_scroll(page):
 # ── Gemini login ──────────────────────────────────────────────────────────────
 
 def verify_strict_login(page):
-    """Return True only if we are genuinely logged into Gemini."""
+    """Return True only if we are genuinely logged into Gemini.
+
+    The new Gemini UI surfaces a sidebar/footer account menu link with
+    `gem-open-account-menu` and `aria-label="Google Account: Name (email)"`
+    once authenticated. We accept either that marker or the older `pillbox`
+    test id for backward compatibility.
+    """
     try:
         html = page.html or ""
-        return (
-            'data-test-id="mavatar-footer-settings-button"' in html
-            or 'data-test-id="pillbox"' in html
-        )
+        if 'gem-open-account-menu' in html:
+            return True
+        if 'aria-label="Google Account:' in html:
+            return True
+        if 'data-test-id="pillbox"' in html:
+            return True
+        return False
     except Exception:
         return False
+
+
+def detect_logged_in_email(page):
+    """Return the email of the logged-in Google account, or None."""
+    try:
+        html = page.html or ""
+        m = re.search(r'aria-label="Google Account:[^"]*\(([^)]+)\)"', html)
+        if m:
+            return m.group(1).strip()
+    except Exception:
+        pass
+    return None
 
 
 def handle_google_login(page, allow_manual=True):
     """Navigate to Gemini and ensure the user is logged in via Google."""
     if verify_strict_login(page):
+        email = detect_logged_in_email(page)
+        if email:
+            print(f">> Logged in as: {email}")
         return True
     if not allow_manual:
         print(">> Not logged in and manual login is disabled.")
@@ -570,7 +594,11 @@ def handle_google_login(page, allow_manual=True):
     print(">> Waiting for successful login...")
     for i in range(240):  # up to 120 s
         if verify_strict_login(page):
-            print(">> Login verified!")
+            email = detect_logged_in_email(page)
+            if email:
+                print(f">> Login verified! Logged in as: {email}")
+            else:
+                print(">> Login verified!")
             return True
         if i % 20 == 0:
             print(f">> Waiting... ({120 - i * 0.5:.0f}s remaining)")
@@ -616,8 +644,7 @@ def select_interface_model(page, model_name, timeout=8):
     try:
         # Check if already selected without opening the picker
         current = _current_model_label(page)
-        cur_l, req_l = current.lower(), model_name.lower()
-        if current and (req_l in cur_l or cur_l in req_l):
+        if current and model_name.lower() in current.lower():
             print(f">> Model '{model_name}' already selected ('{current}').")
             return True
 
@@ -632,32 +659,40 @@ def select_interface_model(page, model_name, timeout=8):
         except Exception:
             picker.click(by_js=True)
 
-        # Wait for menu items to appear (up to 3s).
-        # Note: Gemini uses <gem-menu-item data-test-id="bard-mode-option-{hash}">
-        # with a hash ID (not a name slug), so we enumerate all options and
-        # match on the <span class="label"> text inside each item.
+        # Wait for menu items to appear (up to 3s)
+        # New Gemini UI uses no-space slugs like "3flash"; older used "fast", "thinking".
+        slug_dashed = model_name.strip().lower().replace(" ", "-")
+        slug_nospace = model_name.strip().lower().replace(" ", "")
+        slug_candidates = list(dict.fromkeys([slug_dashed, slug_nospace]))
         target = None
-        available = []
-        for attempt in range(6):
-            menu_items = (
-                page.eles('css:gem-menu-item[data-test-id^="bard-mode-option-"]', timeout=1) or
-                page.eles('css:[data-test-id^="bard-mode-option-"]', timeout=1) or
-                page.eles('css:[role="menuitem"]', timeout=1)
-            )
-            if menu_items:
+        for _ in range(6):
+            for s in slug_candidates:
+                target = (
+                    page.ele(f'button[data-test-id="bard-mode-option-{s}"]', timeout=0.5) or
+                    page.ele(f'css:button[data-test-id="bard-mode-option-{s}"]', timeout=0.5) or
+                    page.ele(f'@@data-test-id=bard-mode-option-{s}', timeout=0.5)
+                )
+                if target:
+                    print(f">> Found model option via data-test-id: bard-mode-option-{s}")
+                    break
+            if target:
                 break
             time.sleep(0.5)
 
-        print(f">> Menu items found: {len(menu_items or [])}")
-        for item in (menu_items or []):
-            # Prefer the inner label span; fall back to full element text
-            label_el = item.ele('css:span.label', timeout=0)
-            text = ((label_el.text if label_el else None) or item.text or "").strip()
-            available.append(text)
-            if re.search(r'\b' + re.escape(model_name.lower()) + r'\b', text.lower()):
-                target = item
-                print(f">> Matched '{model_name}' against menu item '{text}'")
-                break
+        available = []
+        if not target:
+            menu_items = (
+                page.eles('button[data-test-id^="bard-mode-option-"]', timeout=3) or
+                page.eles('@@role=menuitemradio', timeout=2) or
+                page.eles('@@role=menuitem', timeout=2)
+            )
+            for item in (menu_items or []):
+                text = (item.text or "").strip()
+                available.append(text)
+                # Match on word boundary to avoid "pro" matching "problems"
+                if re.search(r'\b' + re.escape(model_name.lower()) + r'\b', text.lower()):
+                    target = item
+                    break
 
         if not target:
             print(f">> '{model_name}' not found in picker. Available: {available}")
@@ -674,8 +709,7 @@ def select_interface_model(page, model_name, timeout=8):
             already = False
         if already:
             current_after = _current_model_label(page)
-            ca_l = current_after.lower()
-            if req_l in ca_l or ca_l in req_l:
+            if model_name.lower() in current_after.lower():
                 print(f">> Model '{model_name}' already checked in picker; closing menu.")
                 try:
                     page.actions.key_down("Escape").key_up("Escape")
@@ -716,17 +750,31 @@ def detect_model_from_html(html):
 
     # Mode picker button text — the display name of the currently selected model
     # e.g. <span ...>Thinking</span> / <span ...>Fast</span> / <span ...>Pro</span>
-    # The span may have extra _ngcontent-* attrs before class="ng-star-inserted",
-    # and Angular inserts <!---->  comment nodes before the span.
-    m = re.search(
-        r'data-test-id="logo-pill-label-container"[^>]*>'
-        r'(?:<!--.*?-->)*\s*'
-        r'<span[^>]*class="ng-star-inserted">([^<]+)</span>',
-        html,
-        re.DOTALL,
-    )
-    if m:
-        return m.group(1).strip()
+    # Find the picker pill region first, then extract the first non-empty span
+    # within a bounded window. Avoid `(?:<!--.*?-->)*` style patterns on full
+    # page HTML — they catastrophically backtrack on Angular pages with many
+    # empty comment nodes.
+    pill_idx = html.find('data-test-id="logo-pill-label-container"')
+    if pill_idx >= 0:
+        window = html[pill_idx:pill_idx + 800]
+        # New UI (2026q1+): the model name span has class containing 'picker-primary-text'.
+        m = re.search(
+            r'<span[^>]{0,300}class="[^"]*picker-primary-text[^"]*"[^>]{0,200}>([^<]+)</span>',
+            window,
+        )
+        if m:
+            return m.group(1).strip()
+        # Older UI: first span after the container with class="ng-star-inserted" (single class).
+        m = re.search(
+            r'<span[^>]{0,200}class="ng-star-inserted"[^>]{0,200}>([^<]+)</span>',
+            window,
+        )
+        if m:
+            return m.group(1).strip()
+        # Last-resort fallback: any span with non-empty text content in the window.
+        m = re.search(r'<span[^>]{0,300}>([^<\s][^<]*)</span>', window)
+        if m:
+            return m.group(1).strip()
 
     return None
 
@@ -1288,13 +1336,31 @@ def run_experiment(
                             wait_start = time.time()
                         time.sleep(poll_interval)
 
-                    # Use JS to grab HTML synchronously — avoids hanging when
-                    # Gemini Pro keeps open network connections after generation.
-                    try:
-                        final_html = page.run_js("return document.documentElement.outerHTML;") or ""
-                    except Exception:
-                        final_html = page.html or ""
-                    model_slug = detect_model_from_html(final_html)
+                    # Reuse the HTML fetched in the wait loop — calling page.html
+                    # again here can hang post-response (Chrome busy with animations
+                    # or Angular re-rendering). If `html` is empty for some reason,
+                    # fall back to a thread-with-timeout page.html call.
+                    print(f">> [diag] post-break, html len={len(html or '')}", flush=True)
+                    final_html = html or ""
+                    if not final_html:
+                        import threading as _th
+                        _html_result = {}
+                        def _fetch_html():
+                            try:
+                                _html_result["v"] = page.html
+                            except Exception as _e:
+                                _html_result["err"] = str(_e)
+                        _t = _th.Thread(target=_fetch_html, daemon=True)
+                        _t.start()
+                        _t.join(timeout=10)
+                        if _t.is_alive():
+                            print(">> page.html timed out after 10s — saving with empty HTML.", flush=True)
+                            final_html = ""
+                        else:
+                            final_html = _html_result.get("v") or ""
+                    print(f">> [diag] calling detect_model_from_html, html len={len(final_html)}", flush=True)
+                    model_slug = detect_model_from_html(final_html) if final_html else None
+                    print(f">> [diag] detect_model returned: {model_slug!r}", flush=True)
                     print(f">> Model detected: {model_slug or 'unknown'}")
 
                     if (
@@ -1372,6 +1438,7 @@ def run_audit(
     config_path,
     delay_seconds=0,
     user_data_dir=None,
+    attach_port=None,
     run_id=None,
     session_id=0,
     sync_barrier=None,
@@ -1513,18 +1580,22 @@ def run_audit(
         # Browser mode
         if page is None:
             co = ChromiumOptions()
+            if attach_port is not None:
+                co.set_local_port(attach_port)
+                co.set_address(f'127.0.0.1:{attach_port}')
+                print(f">> [session {session_id}] Attaching to existing Chrome on port {attach_port}")
+            else:
+                # Give each worker process its own DrissionPage tmp root so that
+                # PortFinder's auto-port cleanup doesn't race across processes and
+                # trigger FileNotFoundError deep inside shutil.rmtree.
+                per_worker_tmp = DATA_DIR / "drission_tmp" / f"session_{session_id:02d}_pid_{os.getpid()}"
+                co.set_tmp_path(per_worker_tmp)
 
-            # Give each worker process its own DrissionPage tmp root so that
-            # PortFinder's auto-port cleanup doesn't race across processes and
-            # trigger FileNotFoundError deep inside shutil.rmtree.
-            per_worker_tmp = DATA_DIR / "drission_tmp" / f"session_{session_id:02d}_pid_{os.getpid()}"
-            co.set_tmp_path(per_worker_tmp)
-
-            co.auto_port()
-            if user_data_dir:
-                co.set_argument(f"--user-data-dir={user_data_dir}")
-            co.set_argument("--no-first-run")
-            co.set_argument("--mute-audio")
+                co.auto_port()
+                if user_data_dir:
+                    co.set_argument(f"--user-data-dir={user_data_dir}")
+                co.set_argument("--no-first-run")
+                co.set_argument("--mute-audio")
             page = ChromiumPage(co)
 
         if "gemini.google.com" not in page.url:
@@ -1658,6 +1729,10 @@ if __name__ == "__main__":
                         help="Clear conversation history and exit.")
     parser.add_argument("--interface-model", type=str, default=None,
                         help="Model to select in Gemini UI (e.g. '2.5 Pro', 'Flash').")
+    parser.add_argument("--attach-port-base", type=int, default=None,
+                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.")
+    parser.add_argument("--session-index-offset", type=int, default=0,
+                        help="Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.")
     parser.add_argument("--output-tag", type=str, default=None,
                         help="Tag appended to run ID for output directories.")
     parser.add_argument("--num-runs", type=int, default=None,
@@ -1827,6 +1902,17 @@ if __name__ == "__main__":
         procs = []
         _thread_log_state = None
 
+        import signal as _signal
+        def _kill_children(signum, frame):
+            for _p in procs:
+                try:
+                    _p.terminate()
+                except Exception:
+                    pass
+            raise SystemExit(1)
+        _signal.signal(_signal.SIGTERM, _kill_children)
+        _signal.signal(_signal.SIGINT, _kill_children)
+
         use_threads = persistent_pages is not None and sessions > 1
 
         if use_threads:
@@ -1893,13 +1979,16 @@ if __name__ == "__main__":
                 print(f">> Session 0 run error: {exc}")
         elif config_mode == "sync" and sessions > 1:
             for exp_idx in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, exp_idx, sessions)
+                effective_idx = exp_idx + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_idx, sessions)
                 session_config = config_paths[exp_idx] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_idx if args.attach_port_base is not None else None
                 p = mp.Process(target=run_audit, kwargs={
                     "config_path": session_config,
                     "parsed_config": _parsed_configs[session_config],
                     "delay_seconds": run_delay,
                     "user_data_dir": user_data_dir,
+                    "attach_port": attach_port,
                     "run_id": run_id,
                     "session_id": exp_idx,
                     "sync_barrier_info": sync_barrier_info,
@@ -1913,19 +2002,23 @@ if __name__ == "__main__":
                     "stop_event": stop_event,
                     "api_ready_event": api_ready_event,
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
         else:
             for session_id in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, session_id, sessions)
+                effective_sid = session_id + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_sid, sessions)
                 session_config = config_paths[session_id] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_sid if args.attach_port_base is not None else None
                 p = mp.Process(target=run_audit, kwargs={
                     "config_path": session_config,
                     "parsed_config": _parsed_configs[session_config],
                     "delay_seconds": run_delay,
                     "user_data_dir": user_data_dir,
+                    "attach_port": attach_port,
                     "run_id": run_id,
-                    "session_id": session_id,
+                    "session_id": effective_sid,
                     "sync_barrier_info": sync_barrier_info,
                     "seed_override": seed_override,
                     "api_models": browser_api_models,
@@ -1936,6 +2029,7 @@ if __name__ == "__main__":
                     "stop_event": stop_event,
                     "api_ready_event": api_ready_event,
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
 
@@ -1973,6 +2067,7 @@ if __name__ == "__main__":
                     "sync_barrier_info": api_bi,
                     "stop_event": stop_event,
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
 

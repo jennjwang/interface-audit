@@ -157,18 +157,6 @@ def _coerce_bool(value):
     return bool(value) if value is not None else None
 
 
-_MCQ_INSTRUCTION_PREFIX = (
-    "Answer the following multiple-choice question with a single letter "
-    "(A, B, C, or D):\n\n"
-)
-
-
-def _wrap_mcq_prompt(text):
-    if text.startswith(_MCQ_INSTRUCTION_PREFIX):
-        return text
-    return _MCQ_INSTRUCTION_PREFIX + text
-
-
 def _detect_is_mcq(item):
     id_val = str(item.get("id", ""))
     if "_mcq" in id_val.lower():
@@ -442,14 +430,7 @@ def human_type(page, selector, text, allow_typos=False):
 
 
 def paste_prompt(page, selector, text):
-    """Insert prompt directly into the text box using execCommand('insertText').
-
-    Intentionally avoids ClipboardEvent('paste') because Claude's UI intercepts
-    paste events and converts multi-paragraph text to a text attachment, causing
-    the model to treat the query as a document to analyse rather than answer.
-    execCommand('insertText') triggers ProseMirror's beforeinput handler directly
-    and inserts text inline without going through the attachment pipeline.
-    """
+    """Insert prompt via synthetic clipboard paste."""
     try:
         ele = selector if not isinstance(selector, str) else page.ele(selector, timeout=5)
         if not ele:
@@ -463,23 +444,22 @@ def paste_prompt(page, selector, text):
         js = f"""
             const el = this;
             el.focus();
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            const sel = window.getSelection();
-            sel.removeAllRanges();
-            sel.addRange(range);
-            document.execCommand('insertText', false, {escaped});
+            const dt = new DataTransfer();
+            dt.setData('text/plain', {escaped});
+            const pasteEvt = new ClipboardEvent('paste', {{
+                clipboardData: dt,
+                bubbles: true,
+                cancelable: true,
+            }});
+            el.dispatchEvent(pasteEvt);
         """
         ele.run_js(js)
         time.sleep(random.uniform(0.3, 0.6))
-        # Verify content landed in the box
+        # Verify; fall back to direct value set
         content = ele.run_js("return this.innerText || this.value || '';") or ""
         if len(content.strip()) < min(20, len(normalized) // 2):
-            print(">> insertText not handled; falling back to input event")
-            ele.run_js(
-                f"this.value = {escaped};"
-                f"this.dispatchEvent(new Event('input', {{bubbles:true}}));"
-            )
+            print(">> Paste not handled; falling back to direct input")
+            ele.run_js(f"this.value = {escaped}; this.dispatchEvent(new Event('input', {{bubbles:true}}));")
             time.sleep(random.uniform(0.2, 0.4))
         return True
     except Exception as e:
@@ -610,30 +590,13 @@ def _extract_model_family(name):
     return lower.strip()
 
 
-def _extract_model_version(name):
-    """Extract version like '4.6' from any model name format. Returns None if absent."""
-    lower = name.lower()
-    m = re.search(r'(?:opus|sonnet|haiku)[\s_\-]+(\d+)[\s_\-\.]+(\d+)', lower)
-    if m:
-        return f"{m.group(1)}.{m.group(2)}"
-    return None
-
-
 def _model_matches(model_name, text):
-    """Check if model_name matches a dropdown menu item text.
-
-    Requires exact (family, version) match. Family-only names like 'opus' no
-    longer loose-match a versioned dropdown item — caller must specify a
-    version (e.g. 'claude-opus-4-6') to disambiguate when the picker has
-    multiple variants of the same family.
-    """
-    fam_m = _extract_model_family(model_name)
-    fam_t = _extract_model_family(text)
-    if fam_m != fam_t:
-        return False
-    ver_m = _extract_model_version(model_name)
-    ver_t = _extract_model_version(text)
-    return ver_m is not None and ver_m == ver_t
+    """Check if model_name matches a dropdown menu item text."""
+    # Direct substring match
+    if model_name.lower() in text.lower():
+        return True
+    # Compare extracted family names (e.g. 'claude-opus-4-7' matches 'Opus 4.7')
+    return _extract_model_family(model_name) == _extract_model_family(text)
 
 
 def select_interface_model(page, model_name, timeout=8):
@@ -663,30 +626,12 @@ def select_interface_model(page, model_name, timeout=8):
         picker.click()
         time.sleep(random.uniform(0.8, 1.5))
 
-        def _read_menu_items():
-            # The picker mixes menuitemradio (model options) with menuitem
-            # (e.g. "More models" submenu trigger), so collect both.
-            radios = page.eles('@@role=menuitemradio', timeout=timeout) or []
-            items = page.eles('@@role=menuitem', timeout=2) or []
-            combined = list(radios) + list(items)
-            if combined:
-                return combined
-            return (
-                page.eles('css:div[role="menuitem"]', timeout=3) or
-                page.eles('css:li[role="option"]', timeout=3) or
-                []
-            )
-
-        def _find_target(items):
-            available = []
-            for item in items:
-                text = (item.text or "").strip()
-                available.append(text)
-                if _model_matches(model_name, text):
-                    return item, available
-            return None, available
-
-        menu_items = _read_menu_items()
+        menu_items = (
+            page.eles('@@role=menuitemradio', timeout=timeout) or
+            page.eles('@@role=menuitem', timeout=timeout) or
+            page.eles('css:div[role="menuitem"]', timeout=3) or
+            page.eles('css:li[role="option"]', timeout=3)
+        )
         if not menu_items:
             print(f">> No model menu items found.")
             try:
@@ -695,26 +640,14 @@ def select_interface_model(page, model_name, timeout=8):
                 pass
             return False
 
-        target, available = _find_target(menu_items)
-
-        # Older / non-default models live behind a "More models" submenu.
-        if not target:
-            more_item = None
-            for item in menu_items:
-                text = (item.text or "").strip().lower()
-                if 'more models' in text:
-                    more_item = item
-                    break
-            if more_item:
-                print(f">> '{model_name}' not in main menu; expanding 'More models'...")
-                try:
-                    more_item.click(by_js=True)
-                except Exception:
-                    more_item.click()
-                time.sleep(random.uniform(0.8, 1.5))
-                menu_items = _read_menu_items()
-                target, extra_available = _find_target(menu_items)
-                available = available + extra_available
+        target = None
+        available = []
+        for item in menu_items:
+            text = (item.text or "").strip()
+            available.append(text)
+            if _model_matches(model_name, text):
+                target = item
+                break
 
         if not target:
             print(f">> '{model_name}' not found in picker. Available: {available}")
@@ -1329,7 +1262,6 @@ def run_experiment(
     exp_seed = experiment.get("seed", defaults.get("seed"))
     reuse_chat = bool(experiment.get("reuse_chat", defaults.get("reuse_chat", False)))
     fast_mode = bool(experiment.get("fast", defaults.get("fast", False)))
-    wrap_mcq = bool(experiment.get("wrap_mcq_prompt", defaults.get("wrap_mcq_prompt", False)))
     wait_after_saves = experiment.get("wait_after_saves", defaults.get("wait_after_saves", [3, 7]))
     interface_model = experiment.get("interface_model", interface_model)
     save_group_name = _build_save_group_name(exp_name, interface_model, query_file)
@@ -1384,8 +1316,6 @@ def run_experiment(
 
         q_id = item["id"]
         q_text = item["query"]
-        if wrap_mcq:
-            q_text = _wrap_mcq_prompt(q_text)
         item_reuse = item.get("reuse_chat")
         effective_reuse = reuse_chat if item_reuse is None else bool(item_reuse)
         is_mcq = item.get("is_mcq")
@@ -1563,6 +1493,7 @@ def run_audit(
     config_path,
     delay_seconds=0,
     user_data_dir=None,
+    attach_port=None,
     run_id=None,
     session_id=0,
     seed_override=None,
@@ -1700,12 +1631,17 @@ def run_audit(
         # Browser mode
         if page is None:
             co = ChromiumOptions()
-            co.auto_port()
-            co.set_tmp_path(str(DATA_DIR / "drission_tmp" / f"session_{session_id:02d}"))
-            if user_data_dir:
-                co.set_argument(f"--user-data-dir={user_data_dir}")
-            co.set_argument("--no-first-run")
-            co.set_argument("--mute-audio")
+            if attach_port is not None:
+                co.set_local_port(attach_port)
+                co.set_address(f'127.0.0.1:{attach_port}')
+                print(f">> [session {session_id}] Attaching to existing Chrome on port {attach_port}")
+            else:
+                co.auto_port()
+                co.set_tmp_path(str(DATA_DIR / "drission_tmp" / f"session_{session_id:02d}"))
+                if user_data_dir:
+                    co.set_argument(f"--user-data-dir={user_data_dir}")
+                co.set_argument("--no-first-run")
+                co.set_argument("--mute-audio")
             page = ChromiumPage(co)
 
         print(">> Navigating to Claude.ai...")
@@ -1868,14 +1804,16 @@ if __name__ == "__main__":
                         help="Model to select in claude.ai UI dropdown.")
     parser.add_argument("--output-tag", type=str, default=None,
                         help="Tag appended to run ID for output directories.")
+    parser.add_argument("--attach-port-base", type=int, default=None,
+                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.")
+    parser.add_argument("--session-index-offset", type=int, default=0,
+                        help="Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.")
     parser.add_argument("--repeat-every-hours", type=float, default=None,
                         help="Re-run the experiment every N hours indefinitely.")
     parser.add_argument("--num-runs", type=int, default=None,
                         help="Number of full experiment passes to run (default: 1, overridable via yaml defaults.num_runs).")
     parser.add_argument("--resume", action="store_true",
                         help="Pick up where the last run left off (skip already-completed queries).")
-    parser.add_argument("--run-id", type=str, default=None,
-                        help="Force a specific run_id instead of a fresh timestamp. Use to fill missing data into an existing run_id directory.")
     args = parser.parse_args()
 
     load_dotenv()
@@ -1954,12 +1892,9 @@ if __name__ == "__main__":
         sys.exit(1)
 
     def run_once(run_delay, run_profile_base, allow_manual, persistent_pages=None):
-        if args.run_id:
-            run_id = args.run_id
-        else:
-            run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-            if args.output_tag:
-                run_id = f"{run_id}-{args.output_tag}"
+        run_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        if args.output_tag:
+            run_id = f"{run_id}-{args.output_tag}"
         clear_only = bool(args.clear_memory)
 
         if args.resume:
@@ -2029,6 +1964,17 @@ if __name__ == "__main__":
         procs = []
         _thread_log_state = None
 
+        import signal as _signal
+        def _kill_children(signum, frame):
+            for _p in procs:
+                try:
+                    _p.terminate()
+                except Exception:
+                    pass
+            raise SystemExit(1)
+        _signal.signal(_signal.SIGTERM, _kill_children)
+        _signal.signal(_signal.SIGINT, _kill_children)
+
         # Create barrier info for per-query cross-session synchronisation
         n_api_workers = len(effective_api_models) if (config_mode == "sync" and effective_api_models) else 0
         sync_barrier_info = None
@@ -2083,13 +2029,16 @@ if __name__ == "__main__":
             manager = mp.Manager()
             login_barrier_obj = manager.Barrier(sessions) if sessions > 1 else None
             for exp_idx in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, exp_idx, sessions)
+                effective_idx = exp_idx + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_idx, sessions)
                 session_config = config_paths[exp_idx] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_idx if args.attach_port_base is not None else None
                 p = mp.Process(target=run_audit, kwargs={
                     "config_path": session_config,
                     "parsed_config": _parsed_configs[session_config],
                     "delay_seconds": run_delay,
                     "user_data_dir": user_data_dir,
+                    "attach_port": attach_port,
                     "run_id": run_id,
                     "session_id": exp_idx,
                     "seed_override": seed_override,
@@ -2104,19 +2053,23 @@ if __name__ == "__main__":
                     "sync_barrier_info": sync_barrier_info,
                     "login_barrier_obj": login_barrier_obj,
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
         else:
             for session_id in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, session_id, sessions)
+                effective_sid = session_id + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_sid, sessions)
                 session_config = config_paths[session_id] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_sid if args.attach_port_base is not None else None
                 p = mp.Process(target=run_audit, kwargs={
                     "config_path": session_config,
                     "parsed_config": _parsed_configs[session_config],
                     "delay_seconds": run_delay,
                     "user_data_dir": user_data_dir,
+                    "attach_port": attach_port,
                     "run_id": run_id,
-                    "session_id": session_id,
+                    "session_id": effective_sid,
                     "seed_override": seed_override,
                     "api_models": browser_api_models,
                     "interface_model": args.interface_model,
@@ -2127,6 +2080,7 @@ if __name__ == "__main__":
                     "api_ready_event": api_ready_event,
                     "sync_barrier_info": sync_barrier_info,
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
 
@@ -2167,6 +2121,7 @@ if __name__ == "__main__":
                     "stop_event": stop_event,
                     "log_file": str(api_log),
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
 
