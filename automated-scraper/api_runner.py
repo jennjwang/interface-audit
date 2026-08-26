@@ -29,6 +29,21 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
+_MCQ_INSTRUCTION_PREFIX = (
+    "Answer the following multiple-choice question with a single letter "
+    "(A, B, C, or D):\n\n"
+)
+
+
+def _looks_like_mcq(text: str) -> bool:
+    if not text:
+        return False
+    stripped = text.rstrip()
+    if not stripped.endswith("Answer:"):
+        return False
+    tail = stripped[-2000:]
+    return sum(1 for lbl in ("\nA.", "\nB.", "\nC.", "\nD.") if lbl in tail) >= 2
+
 
 def _is_claude_model(model_name: str) -> bool:
     return (model_name or "").lower().startswith("claude-")
@@ -40,6 +55,34 @@ def _is_gemini_model(model_name: str) -> bool:
 
 def _safe_id(query_id: str) -> str:
     return "".join([c for c in (query_id or "") if c.isalnum() or c in ("-", "_")]).strip()
+
+
+def _read_prompt_file(path_value: str) -> str:
+    prompt_path = Path(path_value)
+    if not prompt_path.is_absolute():
+        prompt_path = BASE_DIR / prompt_path
+    return prompt_path.read_text(encoding="utf-8").strip()
+
+
+def _pop_system_prompt(api_params: dict[str, Any]) -> str | None:
+    """Extract an optional system prompt from API params.
+
+    YAML configs may pass either ``system_prompt`` directly or
+    ``system_prompt_file`` relative to ``automated-scraper/``.
+    """
+    system_prompt = api_params.pop("system_prompt", None)
+    system_prompt_file = api_params.pop("system_prompt_file", None)
+    # Gemini's API calls this system_instruction; support the alias so the same
+    # YAML can still be explicit when needed.
+    system_instruction = api_params.pop("system_instruction", None)
+
+    if system_prompt_file:
+        return _read_prompt_file(str(system_prompt_file))
+    if system_prompt is not None:
+        return str(system_prompt)
+    if system_instruction is not None:
+        return str(system_instruction)
+    return None
 
 
 def save_api_response(output_dir: str | Path, query_id: str, record: dict[str, Any]) -> Path:
@@ -82,6 +125,9 @@ def run_api_query(
         record["sent_at"] = sent_at
 
     web_search: bool = bool(api_params.pop("web_search", False))
+    system_prompt = _pop_system_prompt(api_params)
+    if system_prompt:
+        record["system_prompt_chars"] = len(system_prompt)
 
     if _is_gemini_model(model_name):
         # ── Google Gemini path ───────────────────────────────────────────────
@@ -113,13 +159,15 @@ def run_api_query(
                 config_kwargs["thinking_config"] = genai_types.ThinkingConfig(
                     thinking_level=str(thinking_level)
                 )
+            if system_prompt:
+                config_kwargs["system_instruction"] = system_prompt
             if web_search:
                 config_kwargs["tools"] = [genai_types.Tool(
                     google_search=genai_types.GoogleSearch()
                 )]
             config_kwargs.update(api_params)
 
-            for attempt in range(5):
+            for attempt in range(7):
                 try:
                     response = client.models.generate_content(
                         model=model_name,
@@ -128,11 +176,16 @@ def run_api_query(
                     )
                     break
                 except Exception as retry_exc:
-                    if "503" in str(retry_exc) or "UNAVAILABLE" in str(retry_exc):
-                        wait = 10 * (2 ** attempt)
-                        print(f">> Gemini 503, retrying in {wait}s (attempt {attempt+1}/5)...")
+                    err_str = str(retry_exc)
+                    transient = (
+                        "503" in err_str or "UNAVAILABLE" in err_str
+                        or "429" in err_str or "RESOURCE_EXHAUSTED" in err_str
+                    )
+                    if transient:
+                        wait = 15 * (2 ** attempt)
+                        print(f">> Gemini transient ({err_str[:60]}), retrying in {wait}s (attempt {attempt+1}/7)...")
                         time.sleep(wait)
-                        if attempt == 4:
+                        if attempt == 6:
                             raise
                     else:
                         raise
@@ -174,6 +227,8 @@ def run_api_query(
                 api_params.pop("temperature", None)
 
             create_kwargs.update(api_params)
+            if system_prompt:
+                create_kwargs["system"] = system_prompt
 
             if web_search:
                 create_kwargs.setdefault("tools", [])
@@ -189,6 +244,15 @@ def run_api_query(
                     betas=["web-search-2025-03-05"],
                     **create_kwargs,
                 )
+            elif "thinking" in create_kwargs:
+                # Extended thinking can exceed 10min; SDK requires streaming.
+                with client.messages.stream(
+                    model=model_name,
+                    max_tokens=create_kwargs.pop("max_tokens", 8096),
+                    messages=[{"role": "user", "content": prompt}],
+                    **create_kwargs,
+                ) as stream:
+                    message = stream.get_final_message()
             else:
                 message = client.messages.create(
                     model=model_name,
@@ -228,9 +292,17 @@ def run_api_query(
             client = OpenAI(api_key=key)
             if web_search:
                 # Responses API supports web_search_preview tool
+                response_input: Any
+                if system_prompt:
+                    response_input = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": prompt},
+                    ]
+                else:
+                    response_input = prompt
                 response = client.responses.create(
                     model=model_name,
-                    input=prompt,
+                    input=response_input,
                     tools=[{"type": "web_search_preview"}],
                     **api_params,
                 )
@@ -243,13 +315,29 @@ def run_api_query(
                 if getattr(response, "usage", None):
                     record["usage"] = response.usage.to_dict() if hasattr(response.usage, "to_dict") else vars(response.usage)
             else:
-                # Reasoning models (o-series / gpt-5.4) require max_completion_tokens
-                # instead of max_tokens when reasoning_effort is set.
-                if "reasoning_effort" in api_params and "max_tokens" in api_params:
+                # gpt-5.x models reject max_tokens (both chat-latest and
+                # reasoning variants); they require max_completion_tokens.
+                needs_rename = (
+                    "reasoning_effort" in api_params
+                    or (model_name or "").lower().startswith("gpt-5.")
+                )
+                if needs_rename and "max_tokens" in api_params:
                     api_params["max_completion_tokens"] = api_params.pop("max_tokens")
+                # Forward reasoning_effort via extra_body so older OpenAI SDKs
+                # (pre-1.62) that don't accept it as a kwarg still pass it
+                # through to the API.
+                extra_body = api_params.pop("extra_body", {}) or {}
+                if "reasoning_effort" in api_params:
+                    extra_body["reasoning_effort"] = api_params.pop("reasoning_effort")
+                if extra_body:
+                    api_params["extra_body"] = extra_body
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
                 response = client.chat.completions.create(
                     model=model_name,
-                    messages=[{"role": "user", "content": prompt}],
+                    messages=messages,
                     **api_params,
                 )
                 content = response.choices[0].message.content or ""
@@ -274,6 +362,25 @@ def _safe_model_dir(model: str) -> str:
     name = (model or "").strip() or "unknown_model"
     name = name.replace(os.sep, "_").replace(" ", "_")
     return "".join([c for c in name if c.isalnum() or c in ("-", "_", ".", "@")]).strip("_") or "unknown_model"
+
+
+def _api_model_dir_name(api_cfg: str | dict[str, Any]) -> str:
+    if isinstance(api_cfg, dict):
+        model = str(api_cfg.get("model", "unknown_model"))
+        params = {k: v for k, v in api_cfg.items() if k != "model"}
+        if params:
+            suffix = "_".join(f"{k}-{v}" for k, v in sorted(params.items()))
+            return _safe_model_dir(f"{model}_{suffix}")
+        return _safe_model_dir(model)
+    return _safe_model_dir(str(api_cfg))
+
+
+def _api_model_and_params(api_cfg: str | dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    if isinstance(api_cfg, dict):
+        model = str(api_cfg.get("model", "")).strip()
+        params = {k: v for k, v in api_cfg.items() if k != "model"}
+        return model, params
+    return str(api_cfg), {}
 
 
 def load_queries_from_file(query_file: str) -> list[tuple[str, str]]:
@@ -310,7 +417,7 @@ def shuffle_queries(queries: list[tuple[str, str]], seed: int | None) -> list[tu
 def run_api_from_config(
     *,
     config_path: Path,
-    api_model: str,
+    api_model: str | dict[str, Any],
     run_id: str,
     session_id: int,
     out_root: Path,
@@ -318,6 +425,7 @@ def run_api_from_config(
     shuffle: bool,
     skip_existing: bool,
     api_key: str | None,
+    experiment_filter: str | None = None,
 ) -> None:
     """Run a full API-only experiment described by a YAML config."""
     with config_path.open("r", encoding="utf-8") as handle:
@@ -330,21 +438,27 @@ def run_api_from_config(
         print(f"No experiments found in {config_path}")
         return
 
-    model_dir = _safe_model_dir(api_model)
+    model_name, api_params = _api_model_and_params(api_model)
+    model_dir = _api_model_dir_name(api_model)
     session_dir = out_root / run_id / model_dir / f"session_{session_id:02d}"
 
     print(f">> API-only run_id: {run_id}")
-    print(f">> API model: {api_model}")
+    print(f">> API model: {model_name}")
+    if api_params:
+        print(f">> API params: {api_params}")
     print(f">> Output root: {session_dir}")
 
     for exp in experiments:
         exp_name = exp.get("name", "experiment")
+        if experiment_filter and exp_name != experiment_filter:
+            continue
         query_file = exp.get("query_file", defaults.get("query_file"))
         if not query_file:
             print(f">> Skipping {exp_name}: missing query_file")
             continue
 
         runs = int(exp.get("runs", defaults.get("runs", 1)) or 1)
+        wrap_mcq = bool(exp.get("wrap_mcq_prompt", defaults.get("wrap_mcq_prompt", False)))
 
         seed_int = None
         if shuffle:
@@ -357,6 +471,8 @@ def run_api_from_config(
         base_queries = load_queries_from_file(str(query_file))
         queries: list[tuple[str, str]] = []
         for q_id, q_text in base_queries:
+            if wrap_mcq and _looks_like_mcq(q_text):
+                q_text = _MCQ_INSTRUCTION_PREFIX + q_text
             for r in range(runs):
                 queries.append((f"{q_id}_run{r}", q_text))
 
@@ -380,9 +496,10 @@ def run_api_from_config(
                 qid,
                 qtext,
                 exp_out_dir,
-                api_model,
+                model_name,
                 sent_at=sent_at,
                 api_key=api_key,
+                **api_params,
             )
             if sleep_seconds > 0 and i < len(queries):
                 time.sleep(sleep_seconds)
@@ -405,6 +522,11 @@ def main() -> None:
         "--models",
         default=None,
         help="Comma-separated list of API models to run in parallel (overrides --api-model).",
+    )
+    parser.add_argument(
+        "--config-api-models",
+        action="store_true",
+        help="Use api_models entries from the YAML, including provider params such as system_prompt_file.",
     )
     parser.add_argument(
         "--run-id",
@@ -438,13 +560,25 @@ def main() -> None:
         action="store_true",
         help="Skip queries whose output JSON already exists (resume a partial run).",
     )
+    parser.add_argument(
+        "--experiment",
+        default=None,
+        help="Only run the experiment with this name (default: run all).",
+    )
     args = parser.parse_args()
 
     load_dotenv()
     # Do not preselect one global key here. Each provider branch in
     # run_api_query resolves the correct env var for its own model.
     api_key = None
-    
+
+    def _parse_model_arg(s: str) -> str | dict:
+        s = s.strip()
+        if s.startswith("{"):
+            import json as _json
+            return _json.loads(s)
+        return s
+
     config_path = Path(args.config)
     if not config_path.is_absolute():
         config_path = BASE_DIR / config_path
@@ -456,10 +590,16 @@ def main() -> None:
     if not out_root.is_absolute():
         out_root = BASE_DIR / out_root
 
-    if args.models:
-        models = [m.strip() for m in args.models.split(",") if m.strip()]
+    if args.config_api_models:
+        with config_path.open("r", encoding="utf-8") as handle:
+            full_config = yaml.safe_load(handle) or {}
+        models = full_config.get("api_models", []) or []
+        if not models:
+            raise SystemExit(f"No api_models found in {config_path}")
+    elif args.models:
+        models = [_parse_model_arg(m.strip()) for m in args.models.split(",") if m.strip()]
     else:
-        models = [args.api_model]
+        models = [_parse_model_arg(args.api_model)]
 
     if len(models) == 1:
         run_api_from_config(
@@ -472,6 +612,7 @@ def main() -> None:
             shuffle=bool(args.shuffle),
             skip_existing=bool(args.skip_existing),
             api_key=api_key,
+            experiment_filter=args.experiment,
         )
         return
 
@@ -489,6 +630,7 @@ def main() -> None:
             "shuffle": bool(args.shuffle),
             "skip_existing": bool(args.skip_existing),
             "api_key": api_key,
+            "experiment_filter": args.experiment,
         }
         p = mp.Process(target=_model_worker, args=(kwargs,))
         p.start()
