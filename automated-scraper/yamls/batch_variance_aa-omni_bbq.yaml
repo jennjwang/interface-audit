@@ -1,0 +1,26 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# Add 5-run variance to the AA-Omni and BBQ cells of compare_baselines_all.py.
+# Currently 5.3-instant and 5.4-reasoning-high are single-run on these two benchmarks;
+# this batch fills in 5 runs each to match the metabench pattern.
+#
+# Submit:
+#   python automated-scraper/batch_runner.py yamls/batch_variance_aa-omni_bbq.yaml \
+#       --config-api-models --run-id batch-variance-aa-omni-bbq --submit-only
+
+api_models:
+  - model: gpt-5.3-chat-latest
+    web_search: false
+
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+
+experiments:
+  - name: variance-aa-omni
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+
+  - name: variance-bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

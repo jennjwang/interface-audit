@@ -1,0 +1,7 @@
+defaults: {runs: 3, shuffle: false}
+api_models:
+- {model: claude-sonnet-4-6, budget_tokens: 1024, max_tokens: 32768}
+- {model: claude-sonnet-4-6, budget_tokens: 4096, max_tokens: 32768}
+- {model: claude-sonnet-4-6, budget_tokens: 16384, max_tokens: 32768}
+experiments:
+- {name: bbq, query_file: ../benchmark_creation/results/bbq-subset-200.csv}

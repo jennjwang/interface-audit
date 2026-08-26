@@ -1,0 +1,14 @@
+defaults:
+  runs: 1
+  shuffle: false
+
+# gpt-5.4 + system prompt on bbq, 1 run.
+api_models:
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"
+
+experiments:
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

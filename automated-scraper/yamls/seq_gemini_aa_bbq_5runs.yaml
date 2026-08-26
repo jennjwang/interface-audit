@@ -1,0 +1,16 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# Gemini sequential — aa-omni + bbq (batch quota exhausted).
+api_models:
+  - model: gemini-3-flash-preview
+    thinking_level: low
+    web_search: false
+    system_prompt_file: "../system-prompts/Gemini 3 Flash.md"
+
+experiments:
+  - name: aa_omniscience
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

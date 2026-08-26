@@ -1,7 +1,45 @@
 defaults:
-  # rotate_query_files:
-  query_file: ../benchmark_creation/results/aa-omniscience-subset-200-from-287.csv
+  rotate_query_files:
+    # - ../benchmark_creation/results/bbq-subset-200.csv
+    # - ../benchmark_creation/results/bbq-subset-200.csv
+    # - ../benchmark_creation/results/elephant-moral-flip-100.csv
+    # - ../benchmark_creation/results/elephant-moral-og-100.csv
+    # - ../benchmark_creation/results/aa-omniscience-subset-200.csv
+
+    # fast: DONE ✓ (all benchmarks at ≥5 valid runs)
+    # - ../benchmark_creation/results/fast-bbq-tier1.csv
+    # - ../benchmark_creation/results/fast-elephant-flip-tier1.csv
+    # - ../benchmark_creation/results/fast-aa-omni-tier1.csv
+
+    # thinking tier CSVs (regenerated 2026-05-11, second pass):
+    # - ../benchmark_creation/results/thinking-bbq-tier1.csv          # 40 queries
+    # - ../benchmark_creation/results/thinking-aa-omni-tier1.csv      # 2 queries
+    # - ../benchmark_creation/results/thinking-elephant-og-tier1.csv  # 2 queries
+    # - ../benchmark_creation/results/thinking-aa-omni-tier2.csv      # 1 query
+
+    # thinking tier CSV (regenerated 2026-05-11, final):
+    # - ../benchmark_creation/results/thinking-aa-omni-tier1.csv      # 1 query
+
+    # thinking API backfill (currently active model):
+    # Completed before 2026-05-12 crash (commented out):
+    # - ../benchmark_creation/results/thinking-api-bbq-tier1.csv          # 200 [DONE 2026-05-11_23-55-48]
+    # - ../benchmark_creation/results/thinking-api-elephant-flip-tier1.csv #  99 [DONE 2026-05-11_23-55-48]
+    - ../benchmark_creation/results/thinking-api-bbq-tier2-remaining.csv #  71 remaining (trimmed from 200; 129 done as of 20:24)
+    - ../benchmark_creation/results/thinking-api-elephant-og-tier1.csv  #  35
+    - ../benchmark_creation/results/thinking-api-bbq-tier3.csv          #  38
+    - ../benchmark_creation/results/thinking-api-elephant-flip-tier2.csv #  13
+    - ../benchmark_creation/results/thinking-api-aa-omni-tier1.csv      #   9
+
+    # fast API backfill (switch active model to fast before running these):
+    # - ../benchmark_creation/results/fast-api-bbq-tier1.csv          # 200
+    # - ../benchmark_creation/results/fast-api-elephant-flip-tier1.csv #  99
+    # - ../benchmark_creation/results/fast-api-bbq-tier2.csv          # 200
+    # - ../benchmark_creation/results/fast-api-elephant-og-tier1.csv  #  35
+    # - ../benchmark_creation/results/fast-api-bbq-tier3.csv          #  38
+    # - ../benchmark_creation/results/fast-api-elephant-flip-tier2.csv #  13
+    # - ../benchmark_creation/results/fast-api-aa-omni-tier1.csv      #   8
   runs: 1
+  num_runs: 1
   shuffle: false
   fast: true
   wait_after_prompts: 0
@@ -15,16 +53,15 @@ api_models:
   - model: gemini-3-flash-preview
     thinking_level: high
     web_search: false
-  - model: gemini-3-flash-preview
-    thinking_level: low
-    web_search: false
+  # - model: gemini-3-flash-preview
+  #   thinking_level: low
+  #   web_search: false
   # - model: gemini-3.1-pro-preview
 
 experiments:
-  - name: fast
-    type: non-temporary
-    interface_model: fast
-
+  # - name: fast
+  #   type: non-temporary
+  #   interface_model: fast
   - name: thinking
     type: non-temporary
     interface_model: thinking

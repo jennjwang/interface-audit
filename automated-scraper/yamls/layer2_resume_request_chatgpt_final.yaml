@@ -1,0 +1,17 @@
+# Resume for ChatGPT phase3 request experiment.
+# 58 queries missing from the 01-48-54 partial run. Completes to 200/200 x 3 runs.
+
+defaults:
+  query_file: chatgpt_data/resume_missing_request_12-32-45.csv
+  runs: 3
+  shuffle: false
+  fast: true
+  wait_after_prompts: 3
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: req
+    type: non-temporary
+    interface_model: instant

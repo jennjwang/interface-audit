@@ -1,0 +1,37 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# 5-runs batch: all 4 batch-supported models on all 6 metabench. New run_id so
+# we don't mix with the 1-run data.
+#
+#   python automated-scraper/batch_runner.py yamls/batch_system_prompt_metabench_5runs.yaml \
+#       --config-api-models --run-id batch-system-prompt-metabench-5runs
+
+api_models:
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"
+
+  - model: claude-opus-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Opus 4.7.md"
+
+  - model: claude-sonnet-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"
+
+experiments:
+  - name: metabench_mmlu
+    query_file: ../experiments/metabench/metabench-mmlu/queries/queries.csv
+  - name: metabench_arc
+    query_file: ../experiments/metabench/metabench-arc/queries/queries.csv
+  - name: metabench_gsm8k
+    query_file: ../experiments/metabench/metabench-gsm8k/queries/queries.csv
+  - name: metabench_hellaswag
+    query_file: ../experiments/metabench/metabench-hellaswag/queries/queries.csv
+  - name: metabench_truthfulqa
+    query_file: ../experiments/metabench/metabench-truthfulQA/queries/queries.csv
+  - name: metabench_winogrande
+    query_file: ../experiments/metabench/metabench-winogrande/queries/queries.csv

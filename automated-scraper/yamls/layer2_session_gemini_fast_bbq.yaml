@@ -1,0 +1,24 @@
+# Layer 2 phase 2 — within-account session variance, Gemini fast, BBQ-200.
+# 1 account x 3 sessions = 3 parallel sessions, all firing at the same wall-clock.
+
+defaults:
+  # query_file: ../benchmark_creation/results/bbq-subset-200.csv
+  query_file: gemini_data/resume_session_04-06-17.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sync
+
+experiments:
+  - name: s1
+    type: non-temporary
+    interface_model: 3 flash
+  - name: s2
+    type: non-temporary
+    interface_model: 3 flash
+  - name: s3
+    type: non-temporary
+    interface_model: 3 flash

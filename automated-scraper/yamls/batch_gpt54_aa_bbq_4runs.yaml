@@ -1,0 +1,15 @@
+defaults:
+  runs: 4
+  shuffle: false
+
+api_models:
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"
+
+experiments:
+  - name: aa_omniscience
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

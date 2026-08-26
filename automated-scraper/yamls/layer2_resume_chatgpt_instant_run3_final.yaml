@@ -1,0 +1,24 @@
+# Final resume for ChatGPT phase1 run3.
+# Fills 2 queries (26874, 30233) that had empty HTML in the 16-46-39 initial.
+# After this run3 = 200/200 per account.
+
+defaults:
+  query_file: chatgpt_data/resume_missing_run3_12-25-50.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sync
+
+experiments:
+  - name: acct1
+    type: non-temporary
+    interface_model: instant
+  - name: acct2
+    type: non-temporary
+    interface_model: instant
+  - name: acct3
+    type: non-temporary
+    interface_model: instant

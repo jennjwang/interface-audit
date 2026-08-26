@@ -1,0 +1,31 @@
+# Layer 2 phase 1 — account-only test.
+# 3 sessions, one per account (no within-account replicates).
+# After this validates accounts (or shows account-level effects), phase 2 expands
+# to 3 sessions per account for the session-level analysis.
+#
+# Profile dir layout: chatgpt_data/chrome_profiles_layer2_phase1/session_{00,01,02}
+# (set up fresh by login_layer2_chatgpt.sh on ports 9222, 9223, 9224)
+#   session_00 -> account 1
+#   session_01 -> account 2
+#   session_02 -> account 3
+
+defaults:
+  query_file: ../benchmark_creation/results/bbq-subset-200.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sync
+
+experiments:
+  - name: acct1
+    type: non-temporary
+    interface_model: instant
+  - name: acct2
+    type: non-temporary
+    interface_model: instant
+  - name: acct3
+    type: non-temporary
+    interface_model: instant

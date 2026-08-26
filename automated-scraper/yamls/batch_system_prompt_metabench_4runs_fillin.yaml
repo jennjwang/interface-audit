@@ -1,0 +1,29 @@
+defaults:
+  runs: 4
+  shuffle: false
+
+# Fillin batch — adds 4 runs to cells that don't yet have 5 total sessions.
+# Different api_models cover different experiments via separate yaml runs.
+# This file covers: gpt-5.4 mmlu (only) + claude-sonnet-4-6 (all 6 benchmarks).
+#
+#   python automated-scraper/batch_runner.py yamls/batch_system_prompt_metabench_4runs_fillin.yaml \
+#       --config-api-models --run-id batch-system-prompt-metabench-5runs
+
+api_models:
+  - model: claude-sonnet-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"
+
+experiments:
+  - name: metabench_mmlu
+    query_file: ../experiments/metabench/metabench-mmlu/queries/queries.csv
+  - name: metabench_arc
+    query_file: ../experiments/metabench/metabench-arc/queries/queries.csv
+  - name: metabench_gsm8k
+    query_file: ../experiments/metabench/metabench-gsm8k/queries/queries.csv
+  - name: metabench_hellaswag
+    query_file: ../experiments/metabench/metabench-hellaswag/queries/queries.csv
+  - name: metabench_truthfulqa
+    query_file: ../experiments/metabench/metabench-truthfulQA/queries/queries.csv
+  - name: metabench_winogrande
+    query_file: ../experiments/metabench/metabench-winogrande/queries/queries.csv

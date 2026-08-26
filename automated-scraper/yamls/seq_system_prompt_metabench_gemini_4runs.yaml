@@ -1,0 +1,24 @@
+defaults:
+  runs: 4
+  shuffle: false
+
+# Gemini sequential — all 6 benchmarks at 4 runs.
+api_models:
+  - model: gemini-3-flash-preview
+    thinking_level: low
+    web_search: false
+    system_prompt_file: "../system-prompts/Gemini 3 Flash.md"
+
+experiments:
+  - name: metabench_mmlu
+    query_file: ../experiments/metabench/metabench-mmlu/queries/queries.csv
+  - name: metabench_arc
+    query_file: ../experiments/metabench/metabench-arc/queries/queries.csv
+  - name: metabench_gsm8k
+    query_file: ../experiments/metabench/metabench-gsm8k/queries/queries.csv
+  - name: metabench_hellaswag
+    query_file: ../experiments/metabench/metabench-hellaswag/queries/queries.csv
+  - name: metabench_truthfulqa
+    query_file: ../experiments/metabench/metabench-truthfulQA/queries/queries.csv
+  - name: metabench_winogrande
+    query_file: ../experiments/metabench/metabench-winogrande/queries/queries.csv

@@ -1,0 +1,44 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# 5-runs batch: +SysPrompt on elephant-flip + elephant-og pairs,
+# for the 5 models that need it to complete the system-prompt comparison
+# across all 9 benchmarks (current sysprompt data covers only 8).
+#
+# Each run = 200 queries (100 og + 100 flip) per model.
+# Total API calls: 5 models × 200 × 5 runs = 5,000.
+#
+# Submit:
+#   python automated-scraper/batch_runner.py yamls/batch_system_prompt_elephant_5runs.yaml \
+#       --config-api-models --run-id batch-system-prompt-elephant-5runs --submit-only
+
+api_models:
+  - model: gpt-5.3-chat-latest
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"
+
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"
+
+  - model: claude-opus-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Opus 4.7.md"
+
+  - model: claude-sonnet-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"
+
+  - model: gemini-3-flash-preview
+    thinking_level: low
+    web_search: false
+    system_prompt_file: "../system-prompts/Gemini 3 Flash.md"
+
+experiments:
+  - name: elephant_og
+    query_file: ../benchmark_creation/results/elephant-moral-og-100.csv
+
+  - name: elephant_flip
+    query_file: ../benchmark_creation/results/elephant-moral-flip-100.csv

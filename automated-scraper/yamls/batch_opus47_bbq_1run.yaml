@@ -1,0 +1,13 @@
+defaults:
+  runs: 1
+  shuffle: false
+
+# claude-opus-4-7 bbq, 1 run only.
+api_models:
+  - model: claude-opus-4-7
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Opus 4.7.md"
+
+experiments:
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

@@ -1,0 +1,26 @@
+defaults:
+  query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+  runs: 3
+  shuffle: false
+
+# API-only ablation. Run with:
+#   python automated-scraper/api_runner.py yamls/followup_system_prompt_ablation_chatgpt_aa.yaml --config-api-models --run-id followup-system-prompt-chatgpt-aa
+experiments:
+  - name: aa_omniscience
+
+api_models:
+  - model: gpt-5.3-chat-latest
+    web_search: false
+
+  - model: gpt-5.3-chat-latest
+    web_search: false
+    system_prompt_file: system_prompt.txt
+
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: system_prompt.txt

@@ -1,0 +1,7 @@
+defaults: {runs: 3, shuffle: false}
+api_models:
+- {model: gpt-5.4-2026-03-05, reasoning_effort: low, max_tokens: 8192}
+- {model: gpt-5.4-2026-03-05, reasoning_effort: medium, max_tokens: 8192}
+- {model: gpt-5.4-2026-03-05, reasoning_effort: high, max_tokens: 8192}
+experiments:
+- {name: bbq, query_file: ../benchmark_creation/results/bbq-subset-200.csv}

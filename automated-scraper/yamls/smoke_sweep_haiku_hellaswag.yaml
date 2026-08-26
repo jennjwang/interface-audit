@@ -1,0 +1,7 @@
+defaults: {runs: 1, shuffle: false}
+api_models:
+- {model: claude-haiku-4-5-20251001, max_tokens: 1024, temperature: 0.0}
+- {model: claude-haiku-4-5-20251001, max_tokens: 1024, top_p: 0.9}
+- {model: claude-haiku-4-5-20251001, budget_tokens: 1024, max_tokens: 32768}
+experiments:
+- {name: hellaswag-smoke, query_file: ../benchmark_creation/results/hellaswag-smoke-5.csv}

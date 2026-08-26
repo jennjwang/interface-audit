@@ -1,0 +1,16 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# 5 total runs, --skip-existing keeps run_0..run_3 untouched; only _run4 hits the API.
+# Output dir: batch-system-prompt-aa-bbq-5runs (use that --run-id)
+api_models:
+  - model: gpt-5.3-chat-latest
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"
+
+experiments:
+  - name: aa_omniscience
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv

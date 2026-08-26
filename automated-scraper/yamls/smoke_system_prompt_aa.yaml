@@ -1,0 +1,25 @@
+defaults:
+  runs: 1
+  shuffle: false
+
+# Smoke test: GPT 5.3 Instant and GPT 5.4 Thinking + provider system prompts
+# on aa-omniscience-subset-200 (200 queries). Two models run in parallel.
+#
+# Run with:
+#   python automated-scraper/api_runner.py yamls/smoke_system_prompt_aa.yaml \
+#       --config-api-models --run-id smoke-system-prompt-aa \
+#       --skip-existing
+
+api_models:
+  - model: gpt-5.3-chat-latest
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"
+
+  - model: gpt-5.4-2026-03-05
+    reasoning_effort: high
+    web_search: false
+    system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"
+
+experiments:
+  - name: aa_omniscience
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv

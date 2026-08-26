@@ -1,0 +1,23 @@
+# Targeted resume: only the 11 queries that failed across all 3 sessions
+# in the 2026-05-17_02-03-57 layer2 Gemini run.
+
+defaults:
+  query_file: gemini_data/resume_missing_bbq.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sync
+
+experiments:
+  - name: acct1
+    type: non-temporary
+    interface_model: fast
+  - name: acct2
+    type: non-temporary
+    interface_model: fast
+  - name: acct3
+    type: non-temporary
+    interface_model: fast

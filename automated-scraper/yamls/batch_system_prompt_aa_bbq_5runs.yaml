@@ -1,0 +1,28 @@
+defaults:
+  runs: 5
+  shuffle: false
+
+# 5-runs batch: claude opus/sonnet + gemini on aa-omni-200 and bbq-subset-200.
+#
+#   python automated-scraper/batch_runner.py yamls/batch_system_prompt_aa_bbq_5runs.yaml \
+#       --config-api-models --run-id batch-system-prompt-aa-bbq-5runs
+
+api_models:
+  - model: claude-opus-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Opus 4.7.md"
+
+  - model: claude-sonnet-4-6
+    web_search: false
+    system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"
+
+  - model: gemini-3-flash-preview
+    thinking_level: low
+    web_search: false
+    system_prompt_file: "../system-prompts/Gemini 3 Flash.md"
+
+experiments:
+  - name: aa_omniscience
+    query_file: ../benchmark_creation/results/aa-omniscience-subset-200.csv
+  - name: bbq
+    query_file: ../benchmark_creation/results/bbq-subset-200.csv
