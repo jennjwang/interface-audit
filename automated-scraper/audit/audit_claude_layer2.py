@@ -944,6 +944,13 @@ def clear_memory(page):
 
 # ── Parse saved HTML ──────────────────────────────────────────────────────────
 
+# Shared response normalisation lives at the automated-scraper root.
+import sys as _sys_rc
+from pathlib import Path as _Path_rc
+_sys_rc.path.insert(0, str(_Path_rc(__file__).resolve().parents[1]))
+from response_cleaning import normalise_response
+
+
 def parse_html_file(html_path, meta_path=None):
     """Extract user query and assistant response from a saved claude.ai or chatgpt.com HTML file."""
     if BeautifulSoup is None:
@@ -988,6 +995,8 @@ def parse_html_file(html_path, meta_path=None):
 
     if not model_slug:
         model_slug = meta.get("model_slug")
+
+    asst_text = normalise_response(asst_text)
 
     parsed = {
         "query_parsed": user_text,
