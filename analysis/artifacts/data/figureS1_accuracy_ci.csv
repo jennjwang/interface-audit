@@ -1,0 +1,127 @@
+model,model_label,benchmark,bench_label,surface,mean_pct,se,n_runs
+chatgpt-instant,GPT 5.3 Instant,metabench-arc,ARC,api,99.9,0.14,5
+chatgpt-instant,GPT 5.3 Instant,metabench-arc,ARC,interface,98.6,0.87,5
+chatgpt-thinking,GPT 5.4 Think,metabench-arc,ARC,api,99.4,0.26,5
+chatgpt-thinking,GPT 5.4 Think,metabench-arc,ARC,interface,98.6,0.38,5
+claude-haiku,Claude Haiku 4.5,metabench-arc,ARC,api,97.1,0.21,5
+claude-haiku,Claude Haiku 4.5,metabench-arc,ARC,interface,97.4,0.36,5
+claude-opus,Claude Opus 4.6,metabench-arc,ARC,api,98.6,0.00,5
+claude-opus,Claude Opus 4.6,metabench-arc,ARC,interface,98.6,0.00,5
+claude-sonnet,Claude Sonnet 4.6,metabench-arc,ARC,api,99.6,0.17,5
+claude-sonnet,Claude Sonnet 4.6,metabench-arc,ARC,interface,98.8,0.14,5
+gemini-thinking,Gemini 3 Flash Think,metabench-arc,ARC,api,99.4,0.14,5
+gemini-thinking,Gemini 3 Flash Think,metabench-arc,ARC,interface,99.3,0.22,5
+gemini-fast,Gemini 3 Flash Fast,metabench-arc,ARC,api,99.0,0.17,5
+gemini-fast,Gemini 3 Flash Fast,metabench-arc,ARC,interface,99.0,0.28,5
+chatgpt-instant,GPT 5.3 Instant,metabench-gsm8k,GSM8K,api,98.3,0.23,5
+chatgpt-instant,GPT 5.3 Instant,metabench-gsm8k,GSM8K,interface,93.3,0.63,5
+chatgpt-thinking,GPT 5.4 Think,metabench-gsm8k,GSM8K,api,99.0,0.21,5
+chatgpt-thinking,GPT 5.4 Think,metabench-gsm8k,GSM8K,interface,96.3,0.75,5
+claude-haiku,Claude Haiku 4.5,metabench-gsm8k,GSM8K,api,99.1,0.08,5
+claude-haiku,Claude Haiku 4.5,metabench-gsm8k,GSM8K,interface,98.1,0.32,5
+claude-opus,Claude Opus 4.6,metabench-gsm8k,GSM8K,api,97.9,0.00,5
+claude-opus,Claude Opus 4.6,metabench-gsm8k,GSM8K,interface,97.8,0.25,5
+claude-sonnet,Claude Sonnet 4.6,metabench-gsm8k,GSM8K,api,98.9,0.10,5
+claude-sonnet,Claude Sonnet 4.6,metabench-gsm8k,GSM8K,interface,98.0,0.28,5
+gemini-thinking,Gemini 3 Flash Think,metabench-gsm8k,GSM8K,api,98.5,0.23,5
+gemini-thinking,Gemini 3 Flash Think,metabench-gsm8k,GSM8K,interface,98.2,0.88,5
+gemini-fast,Gemini 3 Flash Fast,metabench-gsm8k,GSM8K,api,99.1,0.01,5
+gemini-fast,Gemini 3 Flash Fast,metabench-gsm8k,GSM8K,interface,97.5,1.20,5
+chatgpt-instant,GPT 5.3 Instant,metabench-hellaswag,HellaSwag,api,88.3,0.46,5
+chatgpt-instant,GPT 5.3 Instant,metabench-hellaswag,HellaSwag,interface,91.3,0.73,5
+chatgpt-thinking,GPT 5.4 Think,metabench-hellaswag,HellaSwag,api,94.6,0.59,5
+chatgpt-thinking,GPT 5.4 Think,metabench-hellaswag,HellaSwag,interface,94.0,1.30,5
+claude-haiku,Claude Haiku 4.5,metabench-hellaswag,HellaSwag,api,92.5,0.40,5
+claude-haiku,Claude Haiku 4.5,metabench-hellaswag,HellaSwag,interface,89.2,0.71,5
+claude-opus,Claude Opus 4.6,metabench-hellaswag,HellaSwag,api,97.8,0.00,5
+claude-opus,Claude Opus 4.6,metabench-hellaswag,HellaSwag,interface,96.3,0.26,5
+claude-sonnet,Claude Sonnet 4.6,metabench-hellaswag,HellaSwag,api,96.4,0.03,5
+claude-sonnet,Claude Sonnet 4.6,metabench-hellaswag,HellaSwag,interface,93.1,1.53,5
+gemini-thinking,Gemini 3 Flash Think,metabench-hellaswag,HellaSwag,api,96.1,0.25,5
+gemini-thinking,Gemini 3 Flash Think,metabench-hellaswag,HellaSwag,interface,96.3,0.42,5
+gemini-fast,Gemini 3 Flash Fast,metabench-hellaswag,HellaSwag,api,95.2,0.26,5
+gemini-fast,Gemini 3 Flash Fast,metabench-hellaswag,HellaSwag,interface,94.7,0.47,5
+chatgpt-instant,GPT 5.3 Instant,metabench-mmlu,MMLU,api,94.4,0.61,5
+chatgpt-instant,GPT 5.3 Instant,metabench-mmlu,MMLU,interface,91.6,2.37,5
+chatgpt-thinking,GPT 5.4 Think,metabench-mmlu,MMLU,api,95.7,0.30,5
+chatgpt-thinking,GPT 5.4 Think,metabench-mmlu,MMLU,interface,91.8,1.89,5
+claude-haiku,Claude Haiku 4.5,metabench-mmlu,MMLU,api,93.0,0.80,5
+claude-haiku,Claude Haiku 4.5,metabench-mmlu,MMLU,interface,93.0,0.30,5
+claude-opus,Claude Opus 4.6,metabench-mmlu,MMLU,api,96.4,0.42,5
+claude-opus,Claude Opus 4.6,metabench-mmlu,MMLU,interface,96.0,0.20,5
+claude-sonnet,Claude Sonnet 4.6,metabench-mmlu,MMLU,api,95.1,0.27,5
+claude-sonnet,Claude Sonnet 4.6,metabench-mmlu,MMLU,interface,93.0,0.55,5
+gemini-thinking,Gemini 3 Flash Think,metabench-mmlu,MMLU,api,95.0,0.22,5
+gemini-thinking,Gemini 3 Flash Think,metabench-mmlu,MMLU,interface,93.4,0.36,5
+gemini-fast,Gemini 3 Flash Fast,metabench-mmlu,MMLU,api,93.4,0.03,5
+gemini-fast,Gemini 3 Flash Fast,metabench-mmlu,MMLU,interface,93.8,0.44,5
+chatgpt-instant,GPT 5.3 Instant,metabench-truthfulQA,TruthfulQA,api,89.0,0.62,5
+chatgpt-instant,GPT 5.3 Instant,metabench-truthfulQA,TruthfulQA,interface,80.3,2.06,5
+chatgpt-thinking,GPT 5.4 Think,metabench-truthfulQA,TruthfulQA,api,89.2,0.49,5
+chatgpt-thinking,GPT 5.4 Think,metabench-truthfulQA,TruthfulQA,interface,84.8,1.65,5
+claude-haiku,Claude Haiku 4.5,metabench-truthfulQA,TruthfulQA,api,92.2,0.16,5
+claude-haiku,Claude Haiku 4.5,metabench-truthfulQA,TruthfulQA,interface,89.4,0.65,5
+claude-opus,Claude Opus 4.6,metabench-truthfulQA,TruthfulQA,api,97.3,0.22,5
+claude-opus,Claude Opus 4.6,metabench-truthfulQA,TruthfulQA,interface,97.3,0.31,5
+claude-sonnet,Claude Sonnet 4.6,metabench-truthfulQA,TruthfulQA,api,91.2,0.24,5
+claude-sonnet,Claude Sonnet 4.6,metabench-truthfulQA,TruthfulQA,interface,90.6,0.19,5
+gemini-thinking,Gemini 3 Flash Think,metabench-truthfulQA,TruthfulQA,api,92.5,0.16,5
+gemini-thinking,Gemini 3 Flash Think,metabench-truthfulQA,TruthfulQA,interface,90.8,0.32,5
+gemini-fast,Gemini 3 Flash Fast,metabench-truthfulQA,TruthfulQA,api,92.7,0.37,5
+gemini-fast,Gemini 3 Flash Fast,metabench-truthfulQA,TruthfulQA,interface,90.9,0.49,5
+chatgpt-instant,GPT 5.3 Instant,metabench-winogrande,WinoGrande,api,94.4,0.77,5
+chatgpt-instant,GPT 5.3 Instant,metabench-winogrande,WinoGrande,interface,87.1,1.13,5
+chatgpt-thinking,GPT 5.4 Think,metabench-winogrande,WinoGrande,api,94.0,0.58,5
+chatgpt-thinking,GPT 5.4 Think,metabench-winogrande,WinoGrande,interface,75.0,4.59,5
+claude-haiku,Claude Haiku 4.5,metabench-winogrande,WinoGrande,api,87.3,0.83,5
+claude-haiku,Claude Haiku 4.5,metabench-winogrande,WinoGrande,interface,89.0,1.35,5
+claude-opus,Claude Opus 4.6,metabench-winogrande,WinoGrande,api,94.4,0.30,5
+claude-opus,Claude Opus 4.6,metabench-winogrande,WinoGrande,interface,93.3,0.28,5
+claude-sonnet,Claude Sonnet 4.6,metabench-winogrande,WinoGrande,api,92.4,0.24,5
+claude-sonnet,Claude Sonnet 4.6,metabench-winogrande,WinoGrande,interface,88.3,0.54,5
+gemini-thinking,Gemini 3 Flash Think,metabench-winogrande,WinoGrande,api,97.3,0.51,5
+gemini-thinking,Gemini 3 Flash Think,metabench-winogrande,WinoGrande,interface,94.7,0.67,5
+gemini-fast,Gemini 3 Flash Fast,metabench-winogrande,WinoGrande,api,97.0,0.42,5
+gemini-fast,Gemini 3 Flash Fast,metabench-winogrande,WinoGrande,interface,92.0,0.29,5
+chatgpt-instant,GPT 5.3 Instant,bbq,BBQ,api,91.5,0.46,5
+chatgpt-instant,GPT 5.3 Instant,bbq,BBQ,interface,93.9,0.38,5
+chatgpt-thinking,GPT 5.4 Think,bbq,BBQ,api,92.8,0.46,5
+chatgpt-thinking,GPT 5.4 Think,bbq,BBQ,interface,90.8,0.72,5
+claude-haiku,Claude Haiku 4.5,bbq,BBQ,api,88.7,0.40,5
+claude-haiku,Claude Haiku 4.5,bbq,BBQ,interface,84.0,0.29,5
+claude-opus,Claude Opus 4.6,bbq,BBQ,api,97.1,0.10,5
+claude-opus,Claude Opus 4.6,bbq,BBQ,interface,93.7,0.20,5
+claude-sonnet,Claude Sonnet 4.6,bbq,BBQ,api,94.6,0.19,5
+claude-sonnet,Claude Sonnet 4.6,bbq,BBQ,interface,93.1,0.30,5
+gemini-thinking,Gemini 3 Flash Think,bbq,BBQ,api,94.2,0.21,5
+gemini-thinking,Gemini 3 Flash Think,bbq,BBQ,interface,91.3,0.59,5
+gemini-fast,Gemini 3 Flash Fast,bbq,BBQ,api,94.0,0.27,5
+gemini-fast,Gemini 3 Flash Fast,bbq,BBQ,interface,91.0,0.32,5
+chatgpt-instant,GPT 5.3 Instant,aa-omniscience,AA-Omni.,api,50.4,0.75,5
+chatgpt-instant,GPT 5.3 Instant,aa-omniscience,AA-Omni.,interface,48.7,1.11,5
+chatgpt-thinking,GPT 5.4 Think,aa-omniscience,AA-Omni.,api,58.0,1.44,5
+chatgpt-thinking,GPT 5.4 Think,aa-omniscience,AA-Omni.,interface,55.4,0.37,5
+claude-haiku,Claude Haiku 4.5,aa-omniscience,AA-Omni.,api,14.1,0.24,5
+claude-haiku,Claude Haiku 4.5,aa-omniscience,AA-Omni.,interface,11.6,0.73,5
+claude-opus,Claude Opus 4.6,aa-omniscience,AA-Omni.,api,55.6,0.58,5
+claude-opus,Claude Opus 4.6,aa-omniscience,AA-Omni.,interface,49.9,0.46,5
+claude-sonnet,Claude Sonnet 4.6,aa-omniscience,AA-Omni.,api,44.9,0.86,5
+claude-sonnet,Claude Sonnet 4.6,aa-omniscience,AA-Omni.,interface,41.4,0.75,5
+gemini-thinking,Gemini 3 Flash Think,aa-omniscience,AA-Omni.,api,63.2,0.41,5
+gemini-thinking,Gemini 3 Flash Think,aa-omniscience,AA-Omni.,interface,61.5,0.95,5
+gemini-fast,Gemini 3 Flash Fast,aa-omniscience,AA-Omni.,api,63.1,0.98,5
+gemini-fast,Gemini 3 Flash Fast,aa-omniscience,AA-Omni.,interface,53.3,0.97,5
+chatgpt-instant,GPT 5.3 Instant,elephant-flip,Elephant Flip,api,67.6,0.51,5
+chatgpt-instant,GPT 5.3 Instant,elephant-flip,Elephant Flip,interface,70.6,0.81,5
+chatgpt-thinking,GPT 5.4 Think,elephant-flip,Elephant Flip,api,84.8,0.37,5
+chatgpt-thinking,GPT 5.4 Think,elephant-flip,Elephant Flip,interface,75.6,1.03,5
+claude-haiku,Claude Haiku 4.5,elephant-flip,Elephant Flip,api,72.6,0.60,5
+claude-haiku,Claude Haiku 4.5,elephant-flip,Elephant Flip,interface,44.2,1.28,5
+claude-opus,Claude Opus 4.6,elephant-flip,Elephant Flip,api,79.2,0.47,5
+claude-opus,Claude Opus 4.6,elephant-flip,Elephant Flip,interface,68.1,0.39,5
+claude-sonnet,Claude Sonnet 4.6,elephant-flip,Elephant Flip,api,77.0,0.55,5
+claude-sonnet,Claude Sonnet 4.6,elephant-flip,Elephant Flip,interface,66.2,1.32,5
+gemini-thinking,Gemini 3 Flash Think,elephant-flip,Elephant Flip,api,86.6,0.51,5
+gemini-thinking,Gemini 3 Flash Think,elephant-flip,Elephant Flip,interface,78.8,1.32,5
+gemini-fast,Gemini 3 Flash Fast,elephant-flip,Elephant Flip,api,85.8,0.49,5
+gemini-fast,Gemini 3 Flash Fast,elephant-flip,Elephant Flip,interface,66.8,0.66,5
