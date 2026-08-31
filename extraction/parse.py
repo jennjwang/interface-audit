@@ -1,15 +1,15 @@
-"""Parse metabench json outputs and extract answer letters via regex + LLM.
+"""Unified extraction pipeline: raw response JSON -> scored CSV.
+
+Reads JSON response files (API or interface-scraped), extracts the model's
+answer via regex + optional LLM judge (GPT-4o-mini), compares to a gold
+answer key, and writes a scored CSV per folder.
 
 Usage:
-    python experiments/parse.py --data-root experiments/metabench-arc/data \
-        --all-runs --answer-key experiments/metabench-arc/queries/queries.csv
+    python extraction/parse.py --data-root data/metabench-arc/claude-haiku/api/run_0/responses \\
+        --answer-key data/answer_keys/queries.csv --all-runs
 
-By default, only run_ids that exist under automated-scraper/data/raw_html are
-parsed (interface from parsed_json + corresponding API runs). Use --all-runs
-to parse every run under data-root.
-
-When --output is omitted, CSVs are written alongside the source JSON (inside
-data-root), so each benchmark's data stays self-contained.
+    python extraction/parse.py --data-root data/metabench-arc \\
+        --all-runs --answer-key data/answer_keys/queries.csv
 """
 from __future__ import annotations
 
@@ -23,43 +23,17 @@ from pathlib import Path
 from typing import Any, Dict, Tuple
 
 BASE_DIR = Path(__file__).resolve().parent
-sys.path.insert(0, str(BASE_DIR))
+REPO_ROOT = BASE_DIR.parent
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from score import score_existing_csvs
-
 load_dotenv()
 
-DATA_DIR = BASE_DIR / "data"
-CSV_DIR = DATA_DIR / "csv"
-ANSWER_KEY_PATH = BASE_DIR.parent.parent / "automated-scraper" / "queries" / "tinymmlu.csv"
-# When set, only run_ids present under this path are used for parsing (interface + API).
-RAW_HTML_ROOT_DEFAULT = BASE_DIR.parent.parent / "automated-scraper" / "data" / "raw_html"
-
-METABENCH_QUERY_FILENAMES = [
-    "metabench_mmlu_5shot.csv",
-    "metabench_mmlu.csv",
-    "metabench_truthfulQA.csv",
-    "queries.csv",
-]
+DATA_DIR = REPO_ROOT / "data"
 
 DEFAULT_VALID_LETTERS = "ABCDEFGHI"
-
-
-def _find_answer_key_for_data_root(data_root: Path) -> Path | None:
-    """Walk up from data_root looking for a sibling queries/ dir with a known answer key."""
-    for ancestor in [data_root] + list(data_root.parents):
-        queries_dir = ancestor / "queries"
-        if queries_dir.is_dir():
-            for name in METABENCH_QUERY_FILENAMES:
-                candidate = queries_dir / name
-                if candidate.exists():
-                    return candidate
-        if ancestor.name in ("experiments", "personalization"):
-            break
-    return None
+VALID_ANSWERS = set("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 def extract_answer_interface_prefix(text: str) -> str | None:
     """Extract answer from short interface responses.
@@ -401,24 +375,6 @@ def _find_parseable_folders(root: Path) -> list[Path]:
     return sorted(candidates)
 
 
-def _run_id_from_relative_path(data_root: Path, folder: Path) -> str | None:
-    """Extract run_id from folder path. Assumes structure interface/<run_id>/... or api/<run_id>/..."""
-    try:
-        rel = folder.relative_to(data_root)
-    except ValueError:
-        return None
-    parts = rel.parts
-    if len(parts) >= 2 and parts[0] in ("interface", "api", "parsed_json"):
-        return parts[1]
-    return None
-
-
-def _allowed_run_ids_from_raw_html(raw_html_root: Path) -> set[str]:
-    """Return set of run_id directory names under raw_html (timestamp-like dirs)."""
-    if not raw_html_root.exists() or not raw_html_root.is_dir():
-        return set()
-    return {d.name for d in raw_html_root.iterdir() if d.is_dir() and d.name.startswith("20")}
-
 
 def load_answer_key(path: Path, task: str = "mc") -> dict[int, str | dict]:
     if not path.exists():
@@ -469,11 +425,13 @@ def parse_id_from_row(row: Dict[str, Any]) -> int | None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Extract answers from raw JSON responses and write scored CSVs."
+    )
     parser.add_argument(
         "--data-root",
         default=str(DATA_DIR),
-        help="Path to tinymmlu data directory (default: data)",
+        help="Root directory containing JSON response files (default: data/)",
     )
     parser.add_argument(
         "--output",
@@ -481,25 +439,15 @@ def main() -> None:
         help="Output CSV directory (default: same as --data-root)",
     )
     parser.add_argument(
-        "--score-only",
-        action="store_true",
-        help="Score existing CSVs under data/csv and exit.",
-    )
-    parser.add_argument(
         "--answer-key",
-        default=None,
-        help="Path to answer key CSV (id, answer). Default: automated-scraper/queries/tinymmlu.csv or BASE_DIR/queries/tinymmlu.csv.",
-    )
-    parser.add_argument(
-        "--raw-html-root",
-        default=None,
-        metavar="PATH",
-        help="Only parse runs that exist under this path (e.g. automated-scraper/data/raw_html). Default: REPO/automated-scraper/data/raw_html. Use --all-runs to parse every run under data-root.",
+        required=True,
+        help="Path to answer key CSV (must have 'id' and 'answer' columns).",
     )
     parser.add_argument(
         "--all-runs",
         action="store_true",
-        help="Parse all runs under data-root; do not restrict to run_ids in raw_html.",
+        default=True,
+        help="Parse all runs under data-root (default: True).",
     )
     args = parser.parse_args()
 
@@ -522,23 +470,11 @@ def main() -> None:
         output_dir = data_root
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Determine answer key path first so we can infer task type (mc vs gsm8k).
-    if args.answer_key:
-        answer_key_path = Path(args.answer_key)
-        if not answer_key_path.is_absolute():
-            answer_key_path = (Path.cwd() / answer_key_path).resolve()
-    else:
-        answer_key_path = ANSWER_KEY_PATH
-        if not answer_key_path.exists():
-            fallback = BASE_DIR / "queries" / "tinymmlu.csv"
-            answer_key_path = fallback if fallback.exists() else answer_key_path
-        if not answer_key_path.exists():
-            detected = _find_answer_key_for_data_root(data_root)
-            if detected:
-                answer_key_path = detected
-                print(f"Auto-detected answer key: {answer_key_path}")
+    answer_key_path = Path(args.answer_key)
+    if not answer_key_path.is_absolute():
+        answer_key_path = (Path.cwd() / answer_key_path).resolve()
 
-    # Heuristic: detect task type from answer key path.
+    # Detect task type from answer key path.
     key_path_lower = str(answer_key_path).lower()
     if "gsm8k" in key_path_lower:
         task = "gsm8k"
@@ -551,40 +487,15 @@ def main() -> None:
 
     answer_key = load_answer_key(answer_key_path, task=task)
 
-    if args.score_only:
-        score_existing_csvs(output_dir, answer_key)
-        return
-
-    folders = []
     if _has_parseable_files(data_root):
         folders = [data_root]
     else:
         folders = _find_parseable_folders(data_root)
 
-    # Restrict to run_ids that exist in raw_html (and their corresponding API runs)
-    if not args.all_runs:
-        raw_html_root = Path(args.raw_html_root) if args.raw_html_root else RAW_HTML_ROOT_DEFAULT
-        if not raw_html_root.is_absolute():
-            raw_html_root = (Path.cwd() / raw_html_root).resolve()
-        allowed = _allowed_run_ids_from_raw_html(raw_html_root)
-        if allowed:
-            before = len(folders)
-            folders = [f for f in folders if _run_id_from_relative_path(data_root, f) in allowed]
-            if before != len(folders):
-                print(f"Restricted to {len(allowed)} run_ids in raw_html: {sorted(allowed)}")
-                print(f"Parsing {len(folders)} folders (skipped {before - len(folders)} from other runs).")
-        else:
-            if raw_html_root.exists():
-                print(f"No run directories found under {raw_html_root}")
-            else:
-                print(f"raw_html root not found: {raw_html_root}; use --all-runs to parse all data.")
-
     for folder in folders:
         try:
             rel = folder.relative_to(data_root)
             parts = list(rel.parts)
-            # Normalize endpoint roots so e.g. automated-scraper/data/parsed_json
-            # maps to output/interface rather than output/parsed_json.
             if parts and parts[0] == "parsed_json":
                 parts[0] = "interface"
             norm_rel = Path(*parts) if parts else rel
