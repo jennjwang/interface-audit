@@ -7,6 +7,7 @@ import json
 import csv
 import argparse
 import re
+import socket
 import multiprocessing as mp
 import threading
 from pathlib import Path
@@ -70,6 +71,11 @@ def _setup_timestamped_logging(run_id, session_id):
     sys.stdout = _TimestampedTee(stdout_orig, [combined_handle])
     sys.stderr = _TimestampedTee(stderr_orig, [combined_handle])
     return combined_log_path, stdout_orig, stderr_orig, [combined_handle]
+
+def _find_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(('', 0))
+        return s.getsockname()[1]
 
 def _resolve_user_data_dir(profile_base, session_id, total_sessions):
     """Return per-session Chrome user-data-dir (avoid profile contention)."""
@@ -2224,13 +2230,20 @@ def run_experiment(
                 soft_refreshed = False
                 wait_start = time.time()
 
+                _html_retries = 0
                 while True:
                     try:
                         _html = page.html or ""
                     except Exception as _html_err:
-                        print(f">> page.html error: {_html_err}; retrying...")
+                        _html_retries += 1
+                        if _html_retries >= 30:
+                            raise RuntimeError(
+                                f"page.html disconnected after {_html_retries} retries — Chrome likely crashed."
+                            ) from _html_err
+                        print(f">> page.html error: {_html_err}; retrying ({_html_retries}/30)...")
                         time.sleep(2)
                         continue
+                    _html_retries = 0
                     voice_visible = 'start voice' in _html.lower()
                     # Don't save while the response is still streaming —
                     # the markdown div has class "result-thinking" until generation finishes.
@@ -2455,6 +2468,7 @@ def run_audit(
     config_path,
     delay_seconds=0,
     user_data_dir=USER_DATA_PATH,
+    attach_port=None,
     run_id=None,
     session_id=0,
     sync_barrier=None,
@@ -2639,11 +2653,17 @@ def run_audit(
         # Setup Browser (if not provided)
         if page is None:
             co = ChromiumOptions()
-            co.auto_port()
-            co.set_tmp_path(str(DATA_DIR / "drission_tmp" / f"session_{session_id:02d}"))
-            co.set_argument(f'--user-data-dir={user_data_dir}')
-            co.set_argument('--no-first-run')
-            co.set_argument('--mute-audio')
+            if attach_port is not None:
+                # Attach to an externally-launched Chrome via remote-debugging-port.
+                # The user-data-dir was already set by whoever launched that Chrome.
+                co.set_local_port(attach_port)
+                co.set_address(f'127.0.0.1:{attach_port}')
+                print(f">> [session {session_id}] Attaching to existing Chrome on port {attach_port}")
+            else:
+                co.set_local_port(_find_free_port())
+                co.set_user_data_path(user_data_dir)
+                co.set_argument('--no-first-run')
+                co.set_argument('--mute-audio')
             page = ChromiumPage(co)
         
         # 1. Listen for console logs or errors if we want
@@ -2825,6 +2845,10 @@ if __name__ == "__main__":
                              'Cleared automatically at end of run.')
     parser.add_argument('--interface-model', type=str, default=None,
                         help='Model to select in ChatGPT UI dropdown (overrides per-experiment config).')
+    parser.add_argument('--attach-port-base', type=int, default=None,
+                        help='Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.')
+    parser.add_argument('--session-index-offset', type=int, default=0,
+                        help='Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.')
     parser.add_argument('--output-tag', type=str, default=None,
                         help='Tag appended to the run ID for output directories '
                              '(e.g. --output-tag mmlu produces 2026-03-07_12-49-14-mmlu). '
@@ -3049,6 +3073,17 @@ if __name__ == "__main__":
         procs = []
         _thread_log_state = None
 
+        import signal as _signal
+        def _kill_children(signum, frame):
+            for _p in procs:
+                try:
+                    _p.terminate()
+                except Exception:
+                    pass
+            raise SystemExit(1)
+        _signal.signal(_signal.SIGTERM, _kill_children)
+        _signal.signal(_signal.SIGINT, _kill_children)
+
         use_threads = (page is not None and sessions == 1) or \
                       (pages is not None and sessions > 1)
 
@@ -3120,8 +3155,10 @@ if __name__ == "__main__":
         elif config_mode == "sync" and sessions > 1:
             # ── Sync mode: one browser session per experiment (new processes) ──
             for exp_idx in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, exp_idx, sessions)
+                effective_idx = exp_idx + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_idx, sessions)
                 session_config = config_paths[exp_idx] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_idx if args.attach_port_base is not None else None
                 p = mp.Process(
                     target=run_audit,
                     kwargs={
@@ -3129,6 +3166,7 @@ if __name__ == "__main__":
                         "parsed_config": _parsed_configs[session_config],
                         "delay_seconds": run_delay_seconds,
                         "user_data_dir": user_data_dir,
+                        "attach_port": attach_port,
                         "run_id": run_id,
                         "session_id": exp_idx,
                         "sync_barrier_info": sync_barrier_info,
@@ -3145,13 +3183,16 @@ if __name__ == "__main__":
                         "api_ready_event": api_ready_event,
                     },
                 )
+                p.daemon = True
                 p.start()
                 procs.append(p)
         else:
             # ── Sequential mode: all experiments in one browser session (new processes) ──
             for session_id in range(sessions):
-                user_data_dir = _resolve_user_data_dir(run_profile_base, session_id, sessions)
+                effective_sid = session_id + args.session_index_offset
+                user_data_dir = _resolve_user_data_dir(run_profile_base, effective_sid, sessions)
                 session_config = config_paths[session_id] if len(config_paths) > 1 else config_paths[0]
+                attach_port = args.attach_port_base + effective_sid if args.attach_port_base is not None else None
                 p = mp.Process(
                     target=run_audit,
                     kwargs={
@@ -3159,8 +3200,9 @@ if __name__ == "__main__":
                         "parsed_config": _parsed_configs[session_config],
                         "delay_seconds": run_delay_seconds,
                         "user_data_dir": user_data_dir,
+                        "attach_port": attach_port,
                         "run_id": run_id,
-                        "session_id": session_id,
+                        "session_id": effective_sid,
                         "sync_barrier_info": sync_barrier_info,
                         "seed_override": seed_override,
                         "api_models": browser_api_models,
@@ -3173,6 +3215,7 @@ if __name__ == "__main__":
                         "stop_event": stop_event,
                     },
                 )
+                p.daemon = True
                 p.start()
                 procs.append(p)
 
@@ -3212,6 +3255,7 @@ if __name__ == "__main__":
                     "batch_size": int(defaults_cfg.get("batch_size", 0)),
                     "pause_hours": float(defaults_cfg.get("pause_hours", 3)),
                 })
+                p.daemon = True
                 p.start()
                 procs.append(p)
 
