@@ -48,14 +48,21 @@ except Exception:
 
 # Add browser_automation/ root to sys.path for sibling imports.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+# This dir too, so `import rate_limit` resolves under `python -m audit.<script>`
+# as well as direct script execution.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config_loader import load_config, split_selector
+import rate_limit
 
 from api_runner import run_api_query
 from response_cleaning import normalise_response
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "claude_data"
+
+# Shared by every session of a run; replaced from CLI args in main().
+LIMITER = rate_limit.RateLimiter(name="claude")
 
 
 class FileBasedBarrier:
@@ -1335,6 +1342,10 @@ def run_experiment(
             print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
             continue
 
+        if not LIMITER.acquire(stop_event):
+            print(">> Stop signal received while rate-limited. Halting.")
+            return
+
         try:
             print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
             skip_query = False
@@ -1451,6 +1462,9 @@ def run_experiment(
                     time.sleep(poll_interval)
 
                 final_html = page.html
+                if not LIMITER.check_response(final_html, stop_event):
+                    print(">> Stop signal received during cooldown. Halting.")
+                    return
                 model_slug = detect_model_from_html(final_html)
                 print(f">> Model detected: {model_slug or 'unknown'}")
 
@@ -1811,7 +1825,7 @@ if __name__ == "__main__":
     parser.add_argument("--output-tag", type=str, default=None,
                         help="Tag appended to run ID for output directories.")
     parser.add_argument("--attach-port-base", type=int, default=None,
-                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.")
+                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with the routing-variance sequential-login workflow.")
     parser.add_argument("--session-index-offset", type=int, default=0,
                         help="Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.")
     parser.add_argument("--repeat-every-hours", type=float, default=None,
@@ -1820,7 +1834,11 @@ if __name__ == "__main__":
                         help="Number of full experiment passes to run (default: 1, overridable via yaml defaults.num_runs).")
     parser.add_argument("--resume", action="store_true",
                         help="Pick up where the last run left off (skip already-completed queries).")
+    rate_limit.add_cli_arguments(parser)
     args = parser.parse_args()
+
+    LIMITER = rate_limit.from_args(args, name="claude")
+    print(f">> Rate limiting: {LIMITER.describe()}")
 
     load_dotenv()
 

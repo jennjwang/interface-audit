@@ -38,8 +38,12 @@ from DrissionPage.common import Keys
 
 # Add browser_automation/ and repo root to sys.path for sibling imports.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+# This dir too, so `import rate_limit` resolves under `python -m audit.<script>`
+# as well as direct script execution.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config_loader import load_config, split_selector
+import rate_limit
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from api_runner import run_api_query
@@ -47,6 +51,10 @@ from extraction.parse_raw_html import parse_gemini_run as _parse_gemini_run
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "gemini_data"
+
+# Shared by every session of a run; replaced from CLI args in main().
+LIMITER = rate_limit.RateLimiter(name="gemini")
+
 # Where auto-parse writes Gemini JSON by default.
 # Keep this scoped to the scraper's own data directory so we don't
 # directly write into any experiments/* trees (e.g. metabench-mmlu).
@@ -1171,6 +1179,10 @@ def run_experiment(
         if is_mcq is None:
             is_mcq = "_mcq" in str(q_id or "").lower()
 
+        if not LIMITER.acquire(stop_event):
+            print(">> Stop signal received while rate-limited. Halting.")
+            return
+
         print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
         attempt = 0
         barrier_reached = False
@@ -1390,6 +1402,10 @@ def run_experiment(
                             skip_save = True
                         elif is_mcq_item is None and "_mcq" not in str(q_id or "").lower():
                             skip_save = True
+
+                    if not LIMITER.check_response(final_html, stop_event):
+                        print(">> Stop signal received during cooldown. Halting.")
+                        return
 
                     if skip_save:
                         print(">> Skipping save (non-MCQ).")
@@ -1732,7 +1748,7 @@ if __name__ == "__main__":
     parser.add_argument("--interface-model", type=str, default=None,
                         help="Model to select in Gemini UI (e.g. '2.5 Pro', 'Flash').")
     parser.add_argument("--attach-port-base", type=int, default=None,
-                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.")
+                        help="Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with the routing-variance sequential-login workflow.")
     parser.add_argument("--session-index-offset", type=int, default=0,
                         help="Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.")
     parser.add_argument("--output-tag", type=str, default=None,
@@ -1743,7 +1759,11 @@ if __name__ == "__main__":
                         help="Re-run the experiment every N hours indefinitely.")
     parser.add_argument("--resume", action="store_true",
                         help="Pick up where the last run left off (skip already-completed queries).")
+    rate_limit.add_cli_arguments(parser)
     args = parser.parse_args()
+
+    LIMITER = rate_limit.from_args(args, name="gemini")
+    print(f">> Rate limiting: {LIMITER.describe()}")
 
     load_dotenv()
 

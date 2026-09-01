@@ -1,4 +1,4 @@
-# Layer 2 configs — account, session, and request-level variance.
+# Routing-variance configs — account, session, and request-level variance.
 # Used with audit scripts' --attach-port-base flag for multi-Chrome sessions.
 
 # ── ChatGPT: request-level variance (1 account, 3 runs per question) ────
