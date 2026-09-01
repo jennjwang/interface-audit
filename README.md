@@ -13,6 +13,7 @@ interface-audit/
 │   ├── compute_ablation_stats.py  # Ablations: model-version, account, timestamp, sweeps
 │   ├── plot_figures.py            # Figure 1 (bar chart) + Figure 3 (heatmap)
 │   ├── _sweep_sp.py              # Sweep/system-prompt table generation (imported by ablation script)
+│   ├── requirements.txt           # Dependencies for reproduction + scoring
 │   └── artifacts/                 # Generated tables, figures, and CSVs
 ├── extraction/                # Answer extraction + scoring pipeline
 │   ├── parse_raw_html.py          # Raw HTML scrapes → JSON
@@ -22,6 +23,7 @@ interface-audit/
 │   ├── runners/                   # Batch API runner + sweep YAML generator
 │   ├── yamls/                     # Experiment configs (5 files)
 │   ├── api_runner.py              # Shared API client (Anthropic, OpenAI, Google SDKs)
+│   ├── config_loader.py           # Selects one config document from a multi-document YAML
 │   └── response_cleaning.py      # Normalize scraped interface responses
 ├── data.zip                   # All benchmark data (Git LFS, 287 MB)
 └── data/                      # Unzipped data (gitignored, 981 MB)
