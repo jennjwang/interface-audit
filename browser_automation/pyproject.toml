@@ -8,6 +8,9 @@ dependencies = [
     "python-dotenv>=1.0",
     # Browser automation (audit_claude.py, audit_gemini.py, audit_chatgpt.py)
     "DrissionPage>=4.0",
+    # HTML -> JSON parsing of scraped interface responses. Without it the
+    # audit scripts collect raw HTML but silently skip the parse step.
+    "beautifulsoup4>=4.12",
     # LLM provider SDKs
     "anthropic>=0.84.0",
     "openai>=1.0",

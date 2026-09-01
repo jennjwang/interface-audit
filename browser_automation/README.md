@@ -60,8 +60,10 @@ python -m venv .venv
 .venv/bin/pip install -e .
 ```
 
-Installs pyyaml, python-dotenv, DrissionPage and the Anthropic / OpenAI / Google
-SDKs from `pyproject.toml`.
+Installs pyyaml, python-dotenv, DrissionPage, beautifulsoup4 and the Anthropic /
+OpenAI / Google SDKs from `pyproject.toml`. beautifulsoup4 is required for the
+HTML→JSON parse step that runs after each interface scrape; without it the run
+collects raw HTML and prints `Parse skipped: BeautifulSoup not installed`.
 
 ## Prerequisites per channel
 
