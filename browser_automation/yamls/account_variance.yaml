@@ -1,0 +1,121 @@
+# Layer 2 configs — account, session, and request-level variance.
+# Used with audit scripts' --attach-port-base flag for multi-Chrome sessions.
+
+# ── ChatGPT: request-level variance (1 account, 3 runs per question) ────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 3
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: r1
+    type: non-temporary
+    interface_model: instant
+
+---
+# ── Claude: request-level variance ──────────────────────────────────────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 3
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: r1
+    type: non-temporary
+    interface_model: haiku
+
+---
+# ── Gemini: request-level variance ──────────────────────────────────────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 3
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: r1
+    type: non-temporary
+    interface_model: 3 flash
+
+---
+# ── ChatGPT: session-level variance (1 account, 3 sessions) ─────────────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 3
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: s1
+    type: non-temporary
+    interface_model: gpt-5-3-instant
+  - name: s2
+    type: non-temporary
+    interface_model: gpt-5-3-instant
+  - name: s3
+    type: non-temporary
+    interface_model: gpt-5-3-instant
+
+---
+# ── Claude: session-level variance ──────────────────────────────────────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 3
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: s1
+    type: non-temporary
+    interface_model: haiku-4-5
+  - name: s2
+    type: non-temporary
+    interface_model: haiku-4-5
+  - name: s3
+    type: non-temporary
+    interface_model: haiku-4-5
+
+---
+# ── Gemini: session-level variance ──────────────────────────────────────
+defaults:
+  query_file: ../data/answer_keys/bbq-subset-200.csv
+  runs: 1
+  shuffle: false
+  fast: true
+  wait_after_prompts: 3
+  wait_after_saves: 0
+
+mode: sequential
+
+experiments:
+  - name: s1
+    type: non-temporary
+    interface_model: 3 flash
+  - name: s2
+    type: non-temporary
+    interface_model: 3 flash
+  - name: s3
+    type: non-temporary
+    interface_model: 3 flash
