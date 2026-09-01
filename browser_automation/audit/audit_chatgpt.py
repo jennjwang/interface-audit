@@ -18,6 +18,8 @@ from DrissionPage.common import Keys
 # Add browser_automation/ root to sys.path for sibling imports.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from config_loader import load_config, split_selector
+
 from api_runner import run_api_query
 from response_cleaning import normalise_response
 try:
@@ -2507,8 +2509,7 @@ def run_audit(
             full_config = parsed_config
         else:
             try:
-                with open(config_path, 'r') as f:
-                    full_config = yaml.safe_load(f)
+                    full_config = load_config(config_path)
             except Exception as e:
                 print(f"Error loading config {config_path}: {e}")
                 return
@@ -2859,12 +2860,14 @@ if __name__ == "__main__":
             sys.exit(1)
 
     def _resolve_config_path(raw_path):
-        path = Path(raw_path)
+        base, selector = split_selector(raw_path)
+        suffix = f"#{selector}" if selector else ""
+        path = Path(base)
         if path.exists():
-            return path
-        possible_path = BASE_DIR / raw_path
+            return f"{path}{suffix}"
+        possible_path = BASE_DIR / base
         if possible_path.exists():
-            return possible_path
+            return f"{possible_path}{suffix}"
         print(f"Config file not found: {raw_path}")
         sys.exit(1)
 
@@ -2915,10 +2918,10 @@ if __name__ == "__main__":
     for cp in config_paths:
         if cp not in _parsed_configs:
             try:
-                with open(cp, 'r') as f:
-                    _parsed_configs[cp] = yaml.safe_load(f)
-            except Exception:
-                _parsed_configs[cp] = {}
+                    _parsed_configs[cp] = load_config(cp)
+            except Exception as e:
+                print(f"Error loading config {cp}: {e}")
+                sys.exit(1)
 
     _pre_config = _parsed_configs[config_paths[0]]
     if isinstance(_pre_config, dict):
@@ -2949,8 +2952,7 @@ if __name__ == "__main__":
         # see the exact same config snapshot.
         for cp in list(_parsed_configs):
             try:
-                with open(cp, 'r') as f:
-                    _parsed_configs[cp] = yaml.safe_load(f)
+                    _parsed_configs[cp] = load_config(cp)
             except Exception:
                 pass
 

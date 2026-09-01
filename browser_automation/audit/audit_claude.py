@@ -49,6 +49,8 @@ except Exception:
 # Add browser_automation/ root to sys.path for sibling imports.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from config_loader import load_config, split_selector
+
 from api_runner import run_api_query
 from response_cleaning import normalise_response
 
@@ -1543,8 +1545,7 @@ def run_audit(
             full_config = parsed_config
         else:
             try:
-                with open(config_path, "r") as f:
-                    full_config = yaml.safe_load(f)
+                    full_config = load_config(config_path)
             except Exception as e:
                 print(f"Error loading config {config_path}: {e}")
                 return
@@ -1824,12 +1825,14 @@ if __name__ == "__main__":
     load_dotenv()
 
     def _resolve_config(raw, required=True):
-        p = Path(raw)
+        raw_path, selector = split_selector(raw)
+        suffix = f"#{selector}" if selector else ""
+        p = Path(raw_path)
         if p.exists():
-            return p
-        p2 = BASE_DIR / raw
+            return f"{p}{suffix}"
+        p2 = BASE_DIR / raw_path
         if p2.exists():
-            return p2
+            return f"{p2}{suffix}"
         if not required:
             return None
         print(f"Config file not found: {raw}")
@@ -1876,10 +1879,10 @@ if __name__ == "__main__":
             _parsed_configs[cp] = {}
             continue
         try:
-            with open(cp, "r") as f:
-                _parsed_configs[cp] = yaml.safe_load(f)
-        except Exception:
-            _parsed_configs[cp] = {}
+                _parsed_configs[cp] = load_config(cp)
+        except Exception as e:
+            print(f"Error loading config {cp}: {e}")
+            sys.exit(1)
 
     _pre_config = _parsed_configs[config_paths[0]]
     config_mode = _pre_config.get("mode", "sequential") if isinstance(_pre_config, dict) else "sequential"

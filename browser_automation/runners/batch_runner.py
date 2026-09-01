@@ -29,6 +29,7 @@ import yaml
 from dotenv import load_dotenv
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from config_loader import load_config, split_selector
 from api_runner import (
     _api_model_dir_name,
     _api_model_and_params,
@@ -312,8 +313,8 @@ def collect_claude_batch(batch_id: str, model_name: str, system_prompt_chars: in
 
 # ─── orchestration ───────────────────────────────────────────────────────────
 
-def build_jobs(config_path: Path, run_id: str, out_root: Path) -> list[dict]:
-    full = yaml.safe_load(config_path.read_text(encoding="utf-8")) or {}
+def build_jobs(config_path: str | Path, run_id: str, out_root: Path) -> list[dict]:
+    full = load_config(config_path) or {}
     api_models = full.get("api_models", []) or []
     experiments = full.get("experiments", []) or []
     defaults = full.get("defaults", {}) or {}
@@ -484,11 +485,13 @@ def main() -> None:
 
     load_dotenv(BASE_DIR / ".env")
 
-    config_path = Path(args.config)
+    config_arg, config_selector = split_selector(args.config)
+    config_path = Path(config_arg)
     if not config_path.is_absolute():
         config_path = BASE_DIR / config_path
     if not config_path.exists():
         raise SystemExit(f"Config not found: {config_path}")
+    config_path = f"{config_path}#{config_selector}" if config_selector else str(config_path)
 
     run_id = args.run_id or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     out_root = Path(args.out_root)

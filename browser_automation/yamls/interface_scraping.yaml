@@ -3,7 +3,7 @@
 # Query file paths are relative to the original collection environment.
 
 # ── ChatGPT: GPT 5.3 Instant ────────────────────────────────────────────
-defaults: &chatgpt_defaults
+defaults:
   runs: 1
   num_runs: 5
   shuffle: false
@@ -26,7 +26,13 @@ experiments:
 ---
 # ── ChatGPT: GPT 5.4 Thinking ───────────────────────────────────────────
 defaults:
-  <<: *chatgpt_defaults
+  runs: 1
+  num_runs: 5
+  shuffle: false
+  fast: true
+  wait_after_prompts: 0
+  wait_after_saves: 0
+  batch_size: 150
 
 mode: sync
 

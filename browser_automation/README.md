@@ -12,24 +12,40 @@ responses through two channels — the **API** (SDK calls / Batch API) and the
 | `response_cleaning.py` | Normalizes scraped interface responses (strips provider accessibility labels). |
 | `audit/` | Browser-automation scrapers, one per vendor (`audit_chatgpt.py`, `audit_claude.py`, `audit_gemini.py`). Each supports both standard and layer-2 modes (account/session/request variance via `--attach-port-base`). |
 | `runners/` | `batch_runner.py` (OpenAI/Anthropic Batch API submission) and `generate_sweep_yaml.py` (expands parameter specs into experiment configs). |
-| `yamls/` | Consolidated experiment configs: `interface_scraping.yaml`, `api_batch.yaml`, `sampling_sweeps.yaml`, `account_variance.yaml`, `system_prompt.yaml`. |
+| `yamls/` | Consolidated experiment configs: `interface_scraping.yaml`, `api_batch.yaml`, `sampling_sweeps.yaml`, `account_variance.yaml`, `system_prompt.yaml`. All but `system_prompt.yaml` hold **multiple YAML documents** (one per provider/model/run) — see [Selecting a config](#selecting-a-config). |
 
 ## Running
 
 ```bash
 # Interface scraping (launches Chrome via DrissionPage)
-python audit/audit_claude.py --configs yamls/interface_scraping.yaml
+python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku
 
 # Layer-2 mode (attach to existing Chrome sessions for account variance)
-python audit/audit_chatgpt.py --configs yamls/account_variance.yaml \
+python audit/audit_chatgpt.py --configs yamls/account_variance.yaml#0 \
     --attach-port-base 9222 --profile-base <chrome_profiles_dir>
 
 # Batch API submission (OpenAI/Anthropic, 50% cheaper)
-python runners/batch_runner.py yamls/api_batch.yaml --config-api-models --run-id <id>
+python runners/batch_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
 
 # Generate sweep configs from parameter spec
 python runners/generate_sweep_yaml.py --temperature 0,0.5,0.7 --top-p 0.9,0.95
 ```
+
+### Selecting a config
+
+Each entry passed to `--configs` supplies **one session**, so a config file that
+holds several YAML documents needs a selector saying which one to use — by
+document index or by an experiment / api-model name unique to that document:
+
+```bash
+yamls/interface_scraping.yaml#5        # by document index
+yamls/interface_scraping.yaml#haiku    # by experiment name
+```
+
+Single-document files (`system_prompt.yaml`) load with no selector. Omitting a
+selector on a multi-document file — or giving one that matches several
+documents — fails with a listing of the available documents, rather than
+silently running the wrong provider's config.
 
 ## Data
 

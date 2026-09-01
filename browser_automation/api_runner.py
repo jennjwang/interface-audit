@@ -26,6 +26,8 @@ import yaml
 from dotenv import load_dotenv
 
 
+from config_loader import load_config, split_selector
+
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 
@@ -416,7 +418,7 @@ def shuffle_queries(queries: list[tuple[str, str]], seed: int | None) -> list[tu
 
 def run_api_from_config(
     *,
-    config_path: Path,
+    config_path: str | Path,
     api_model: str | dict[str, Any],
     run_id: str,
     session_id: int,
@@ -428,8 +430,7 @@ def run_api_from_config(
     experiment_filter: str | None = None,
 ) -> None:
     """Run a full API-only experiment described by a YAML config."""
-    with config_path.open("r", encoding="utf-8") as handle:
-        full_config = yaml.safe_load(handle) or {}
+    full_config = load_config(config_path) or {}
 
     defaults = full_config.get("defaults", {}) or {}
     experiments = full_config.get("experiments", []) or []
@@ -579,11 +580,13 @@ def main() -> None:
             return _json.loads(s)
         return s
 
-    config_path = Path(args.config)
+    config_arg, config_selector = split_selector(args.config)
+    config_path = Path(config_arg)
     if not config_path.is_absolute():
         config_path = BASE_DIR / config_path
     if not config_path.exists():
         raise SystemExit(f"Config not found: {config_path}")
+    config_ref = f"{config_path}#{config_selector}" if config_selector else str(config_path)
 
     run_id = args.run_id or datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     out_root = Path(args.out_root)
@@ -591,8 +594,7 @@ def main() -> None:
         out_root = BASE_DIR / out_root
 
     if args.config_api_models:
-        with config_path.open("r", encoding="utf-8") as handle:
-            full_config = yaml.safe_load(handle) or {}
+        full_config = load_config(config_ref) or {}
         models = full_config.get("api_models", []) or []
         if not models:
             raise SystemExit(f"No api_models found in {config_path}")
@@ -603,7 +605,7 @@ def main() -> None:
 
     if len(models) == 1:
         run_api_from_config(
-            config_path=config_path,
+            config_path=config_ref,
             api_model=models[0],
             run_id=run_id,
             session_id=int(args.session_id),
@@ -621,7 +623,7 @@ def main() -> None:
     workers: list[mp.Process] = []
     for model in models:
         kwargs = {
-            "config_path": config_path,
+            "config_path": config_ref,
             "api_model": model,
             "run_id": run_id,
             "session_id": int(args.session_id),
