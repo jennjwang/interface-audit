@@ -1,9 +1,0 @@
-defaults: {runs: 5, shuffle: false}
-api_models:
-- {model: claude-opus-4-7, max_tokens: 1024}
-- {model: claude-opus-4-7, max_tokens: 1024, top_p: 0.9}
-- {model: claude-opus-4-7, max_tokens: 1024, top_p: 0.95}
-- {model: claude-opus-4-7, max_tokens: 32768, budget_tokens: 1024}
-- {model: claude-opus-4-7, max_tokens: 32768, budget_tokens: 4096}
-experiments:
-- {name: bbq, query_file: ../benchmark_creation/results/bbq-subset-200.csv}
