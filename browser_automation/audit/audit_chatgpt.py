@@ -17,8 +17,12 @@ from DrissionPage import ChromiumPage, ChromiumOptions
 from DrissionPage.common import Keys
 # Add browser_automation/ root to sys.path for sibling imports.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+# This dir too, so `import rate_limit` resolves under `python -m audit.<script>`
+# as well as direct script execution.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from config_loader import load_config, split_selector
+import rate_limit
 
 from api_runner import run_api_query
 from response_cleaning import normalise_response
@@ -29,6 +33,9 @@ except Exception:
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "chatgpt_data"
+
+# Shared by every session of a run; replaced from CLI args in main().
+LIMITER = rate_limit.RateLimiter(name="chatgpt")
 
 class _TimestampedTee:
     """Write to console as-is, and to log(s) with timestamps per line."""
@@ -2118,6 +2125,10 @@ def run_experiment(
             print(f">> [{i+1}/{len(queries)}] Skipping {q_id} (already saved).")
             continue
 
+        if not LIMITER.acquire(stop_event):
+            print(">> Stop signal received while rate-limited. Halting.")
+            return
+
         try:
             print(f"\n[{i+1}/{len(queries)}] Processing {q_id}...")
             skip_query = False
@@ -2323,15 +2334,15 @@ def run_experiment(
                         # Wrong model / downgrade — pause and re-send instead of aborting
                         is_downgrade = model_slug in DOWNGRADE_SLUGS
                         tag = "DOWNGRADE" if is_downgrade else "WRONG MODEL"
-                        pause_secs = 7200
-                        print(f">> {tag}: got '{model_slug}' on query {q_id}. "
-                              f"Pausing {pause_secs}s then re-sending...")
-                        pause_end = time.time() + pause_secs
-                        while time.time() < pause_end:
-                            if stop_event and stop_event.is_set():
-                                print(">> Stop signal received during downgrade pause. Halting.")
-                                return
-                            time.sleep(5)
+                        print(f">> {tag}: got '{model_slug}' on query {q_id}.")
+                        # A downgrade is how the platform signals rate limiting, so
+                        # route it through the shared limiter: configurable duration,
+                        # and the window stays suppressed for other sessions too.
+                        if not LIMITER.trigger_cooldown(
+                            f"{tag} to '{model_slug}'", stop_event
+                        ):
+                            print(">> Stop signal received during downgrade pause. Halting.")
+                            return
                         page.get("https://chatgpt.com/")
                         time.sleep(5)
                         ensure_new_chat(page, attempts=3,
@@ -2401,6 +2412,10 @@ def run_experiment(
                         skip_save = True
                     elif is_mcq is None and "_mcq" not in q_id_str:
                         skip_save = True
+                if not LIMITER.check_response(final_response_html, stop_event):
+                    print(">> Stop signal received during cooldown. Halting.")
+                    return
+
                 if skip_save:
                     print(">> Skipping save (non-MCQ JSON query).")
                 else:
@@ -2836,14 +2851,18 @@ if __name__ == "__main__":
     parser.add_argument('--interface-model', type=str, default=None,
                         help='Model to select in ChatGPT UI dropdown (overrides per-experiment config).')
     parser.add_argument('--attach-port-base', type=int, default=None,
-                        help='Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with Layer 2 sequential-login workflow.')
+                        help='Attach to existing Chrome instances on ports starting at this value (port = base + session_id) instead of launching new Chrome processes. Use with the routing-variance sequential-login workflow.')
     parser.add_argument('--session-index-offset', type=int, default=0,
                         help='Offset added to all session indices (profile slot and attach port). Use when running a single session targeting slot N: --sessions 1 --session-index-offset N.')
     parser.add_argument('--output-tag', type=str, default=None,
                         help='Tag appended to the run ID for output directories '
                              '(e.g. --output-tag mmlu produces 2026-03-07_12-49-14-mmlu). '
                              'Applied to raw_html, parsed_json, api, logs, and memory_snapshots.')
+    rate_limit.add_cli_arguments(parser)
     args = parser.parse_args()
+
+    LIMITER = rate_limit.from_args(args, name="chatgpt")
+    print(f">> Rate limiting: {LIMITER.describe()}")
     delay_seconds = 0
 
     # Resolve custom instructions (support @file.txt to read from file)

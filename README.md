@@ -25,8 +25,7 @@ interface-audit/
 │   ├── api_runner.py              # Shared API client (Anthropic, OpenAI, Google SDKs)
 │   ├── config_loader.py           # Selects one config document from a multi-document YAML
 │   └── response_cleaning.py      # Normalize scraped interface responses
-├── data.zip                   # All benchmark data (Git LFS, 287 MB)
-└── data/                      # Unzipped data (gitignored, 981 MB)
+└── data.zip                   # All benchmark data (Git LFS, 287 MB)
 ```
 
 ## Reproducing paper results
@@ -36,13 +35,12 @@ interface-audit/
 unzip data.zip
 
 # Install dependencies (numpy, pandas, scipy, statsmodels, matplotlib)
-python -m venv .venv-analysis
-.venv-analysis/bin/pip install -r analysis/requirements.txt
+pip install -r analysis/requirements.txt
 
 # Generate all tables, figures, and statistics
-.venv-analysis/bin/python analysis/compute_paper_stats.py --latex     # ~5 min
-.venv-analysis/bin/python analysis/compute_ablation_stats.py --latex  # ~1 min
-.venv-analysis/bin/python analysis/plot_figures.py                    # ~5 sec
+python analysis/compute_paper_stats.py --latex     # ~5 min
+python analysis/compute_ablation_stats.py --latex  # ~1 min
+python analysis/plot_figures.py                    # ~5 sec
 ```
 
 No API key is needed: the reproduction runs entirely off the shipped data and
@@ -80,7 +78,7 @@ for the module layout.
 
 ```bash
 cd browser_automation
-python -m venv .venv && .venv/bin/pip install -e .
+pip install -e .
 ```
 
 Prerequisites differ by channel:
@@ -109,7 +107,7 @@ document and needs no selector.
 ### API channel
 
 ```bash
-.venv/bin/python api_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
+python api_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
 ```
 
 Writes one JSON per query under `<out-root>/<run-id>/<model>_<params>/session_00/<experiment>/`.
@@ -122,7 +120,7 @@ Batch APIs at roughly half the cost.
 
 ```bash
 # First time on a machine: sign in when Chrome opens, then leave it running
-.venv/bin/python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku \
+python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku \
     --allow-manual-login
 ```
 
