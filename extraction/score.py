@@ -88,24 +88,6 @@ BBQ_PATTERNS = [
 DEFAULT_VALID_LETTERS = "ABCDEFGHI"
 
 
-def extract_interface_prefix(text: str) -> str | None:
-    """Extract answer from short interface responses.
-
-    Handles:
-    1. 'Claude responded: D\\nD' — Claude prefix with single letter
-    2. 'D' or 'D\\n...' — bare single letter on first line (ChatGPT/Gemini)
-    """
-    if not text:
-        return None
-    first_line = text.strip().split("\n")[0].strip()
-    m = re.search(r"(?:Claude responded:)\s*([A-Za-z])\s*$", first_line, re.IGNORECASE)
-    if m:
-        return m.group(1).upper()
-    m = re.match(r"^([A-Za-z])\.?\s*$", first_line)
-    if m:
-        return m.group(1).upper()
-    return None
-
 
 def extract_letter(text: str, task: str = "mc") -> str | None:
     """Extract a multiple-choice letter from model response text.
@@ -441,11 +423,10 @@ def score_mc(items: list[dict], gold: dict[str, dict], task: str = "mc",
             continue
         gold_ans = g["answer"].upper()
 
-        # Try interface prefix first, then regex, then LLM
-        prefix = extract_interface_prefix(item["response"])
+        # Try regex first, then LLM fallback
         regex = extract_letter(item["response"], task=task)
-        llm = llm_extract_mc(client, item["response"]) if client and not (prefix or regex) else None
-        pred = prefix or regex or llm
+        llm = llm_extract_mc(client, item["response"]) if client and not regex else None
+        pred = regex or llm
 
         correct = ""
         if pred is not None:
