@@ -30,14 +30,21 @@ interface-audit/
 ## Reproducing paper results
 
 ```bash
-# Unzip data (if not already present)
+# Unzip data (if not already present) — 287 MB zip → 966 MB on disk
 unzip data.zip
 
+# Install dependencies (numpy, pandas, scipy, statsmodels, matplotlib)
+python -m venv .venv-analysis
+.venv-analysis/bin/pip install -r analysis/requirements.txt
+
 # Generate all tables, figures, and statistics
-python analysis/compute_paper_stats.py --latex      # ~3 min
-python analysis/compute_ablation_stats.py --latex    # ~30 sec
-python analysis/plot_figures.py                      # ~3 sec
+.venv-analysis/bin/python analysis/compute_paper_stats.py --latex     # ~5 min
+.venv-analysis/bin/python analysis/compute_ablation_stats.py --latex  # ~1 min
+.venv-analysis/bin/python analysis/plot_figures.py                    # ~5 sec
 ```
+
+No API key is needed: the reproduction runs entirely off the shipped data and
+the LLM-judge caches in `data/caches/`.
 
 Outputs:
 - `analysis/artifacts/tables/main_tables.tex` — main-text table
