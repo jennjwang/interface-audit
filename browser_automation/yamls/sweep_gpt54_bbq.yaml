@@ -1,9 +1,0 @@
-defaults: {runs: 3, shuffle: false}
-api_models:
-- {model: gpt-5.4-2026-03-05, max_tokens: 1024, temperature: 0.0}
-- {model: gpt-5.4-2026-03-05, max_tokens: 1024, temperature: 0.5}
-- {model: gpt-5.4-2026-03-05, max_tokens: 1024, temperature: 0.7}
-- {model: gpt-5.4-2026-03-05, max_tokens: 1024, top_p: 0.9}
-- {model: gpt-5.4-2026-03-05, max_tokens: 1024, top_p: 0.95}
-experiments:
-- {name: bbq, query_file: ../benchmark_creation/results/bbq-subset-200.csv}
