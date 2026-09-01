@@ -55,6 +55,20 @@ Run data (gitignored, multi-GB) is stored in `chatgpt_data/`, `claude_data/`,
 
 ## Dependencies
 
+```bash
+python -m venv .venv
+.venv/bin/pip install -e .
 ```
-pip install pyyaml python-dotenv DrissionPage anthropic openai google-genai
-```
+
+Installs pyyaml, python-dotenv, DrissionPage and the Anthropic / OpenAI / Google
+SDKs from `pyproject.toml`.
+
+## Prerequisites per channel
+
+| Channel | Needs |
+|---|---|
+| **API** (`api_runner.py`, `runners/batch_runner.py`) | Provider keys in a `.env` at the repo root or above: `ANTHROPIC_KEY`, `OPENAI_KEY`, `GEMINI_API_KEY`. Runs headless — no browser. |
+| **Interface** (`audit/audit_*.py`) | Google Chrome, plus a Chrome profile already signed in to the provider. Profiles live under `<vendor>_data/chrome_profiles*/` and are gitignored, so a fresh clone has none — sign in once with `--allow-manual-login` before unattended runs. |
+
+Failed API calls are not silent: the per-query JSON records an `error` field
+(e.g. an expired key or exhausted credit) alongside the prompt and timestamps.

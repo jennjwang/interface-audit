@@ -13,3 +13,14 @@ dependencies = [
     "openai>=1.0",
     "google-genai>=1.0",
 ]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Flat script layout: the importable modules sit at the top level, and the
+# sibling directories (audit/, runners/, yamls/, *_data/) are scripts and data,
+# not packages. Without this, setuptools' auto-discovery aborts with
+# "Multiple top-level packages discovered in a flat-layout".
+[tool.setuptools]
+py-modules = ["api_runner", "response_cleaning", "config_loader"]

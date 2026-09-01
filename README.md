@@ -55,10 +55,30 @@ Outputs:
 | `bbq/`, `aa-omniscience/`, `elephant-{flip,og}/` | 3 custom benchmarks (280 runs) |
 | `answer_keys/` | Gold answer CSVs for custom benchmarks |
 | `caches/` | LLM judge caches (BBQ, AA-Omni, elephant, system-prompt) |
-| `human_validation/` | Annotator audit data (extractor votes + validation summary) |
+| `human_validation/` | Annotator audit data: raw extractor votes, the AA-Omniscience 100-item grader sample, consolidated vote CSVs, and the producer scripts |
 | `ablations/` | System-prompt, sampling/reasoning sweeps, account variation, GPT 5.4 instant |
 
 Each run directory contains `responses/` (raw JSON) and `scored.csv` (pre-computed scores).
+
+## Collecting new data
+
+Data collection lives in `browser_automation/` (see its README for details).
+
+```bash
+cd browser_automation
+python -m venv .venv && .venv/bin/pip install -e .   # pyyaml, dotenv, DrissionPage, provider SDKs
+
+# API channel — needs ANTHROPIC_KEY / OPENAI_KEY / GEMINI_API_KEY in .env
+.venv/bin/python api_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
+
+# Interface channel — launches Chrome via DrissionPage; needs a logged-in profile
+.venv/bin/python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku
+```
+
+The consolidated configs hold several YAML documents each, so a selector
+(`#<index>` or `#<experiment-name>`) picks which one to run; omitting it prints
+the available documents. Collected runs are scored with `extraction/score.py`
+below.
 
 ## Scoring a new run
 
