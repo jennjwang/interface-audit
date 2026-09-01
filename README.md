@@ -1,8 +1,8 @@
 # interface-audit
 
-Code and data for **"Does the API Mirror the Interface? Comparing LLM Performance Across Access Surfaces"**.
+Code and data for **"API Benchmark Scores Do Not Reliably Transfer to Chatbot Platforms"**.
 
-We compare LLM accuracy when accessed via API versus web interface across 9 benchmarks and 7 model systems (Claude, GPT, Gemini). All 700 runs (10 benchmarks × 7 models × 2 surfaces × 5 runs) are included.
+We compare LLM accuracy when accessed via API versus web interface across 9 benchmarks and 7 model systems (Claude, GPT, Gemini). All 700 runs are included — 10 evaluation sets × 7 models × 2 surfaces × 5 runs, where the 9 benchmarks yield 10 sets because AITA-NTA-OG and AITA-NTA-Flip are evaluated separately.
 
 ## Repository structure
 
@@ -71,23 +71,83 @@ Each run directory contains `responses/` (raw JSON) and `scored.csv` (pre-comput
 
 ## Collecting new data
 
-Data collection lives in `browser_automation/` (see its README for details).
+Collection lives in `browser_automation/`, which drives the two access surfaces the
+paper compares: the **API** (provider SDKs, headless) and the **interface**
+(a real browser session via DrissionPage). See `browser_automation/README.md`
+for the module layout.
+
+### Setup
 
 ```bash
 cd browser_automation
-python -m venv .venv && .venv/bin/pip install -e .   # pyyaml, dotenv, DrissionPage, provider SDKs
-
-# API channel — needs ANTHROPIC_KEY / OPENAI_KEY / GEMINI_API_KEY in .env
-.venv/bin/python api_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
-
-# Interface channel — launches Chrome via DrissionPage; needs a logged-in profile
-.venv/bin/python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku
+python -m venv .venv && .venv/bin/pip install -e .
 ```
 
-The consolidated configs hold several YAML documents each, so a selector
-(`#<index>` or `#<experiment-name>`) picks which one to run; omitting it prints
-the available documents. Collected runs are scored with `extraction/score.py`
-below.
+Prerequisites differ by channel:
+
+| Channel | Needs |
+|---|---|
+| API | Provider keys in a `.env` at the repo root: `ANTHROPIC_KEY`, `OPENAI_KEY`, `GEMINI_API_KEY`. No browser. |
+| Interface | Google Chrome, plus a Chrome profile signed in to the provider. Profiles live under `<vendor>_data/chrome_profiles*/` and are gitignored, so a fresh clone has none. |
+
+### Choosing a config
+
+The five files in `yamls/` each hold **several YAML documents**, one per
+provider/model/run. Because each `--configs` entry supplies one session, append a
+selector naming the document — a document index, or an experiment/api-model name
+unique to it:
+
+```bash
+yamls/interface_scraping.yaml#5        # by document index
+yamls/interface_scraping.yaml#haiku    # by experiment name
+```
+
+Omitting the selector on a multi-document file, or giving an ambiguous one, prints
+the available documents instead of guessing. `system_prompt.yaml` is a single
+document and needs no selector.
+
+### API channel
+
+```bash
+.venv/bin/python api_runner.py yamls/api_batch.yaml#6 --config-api-models --run-id <id>
+```
+
+Writes one JSON per query under `<out-root>/<run-id>/<model>_<params>/session_00/<experiment>/`.
+Each record carries the prompt, timestamps, token usage and the response — and on
+failure an `error` field (expired key, exhausted credit) rather than failing silently.
+`runners/batch_runner.py` submits the same configs through the OpenAI/Anthropic
+Batch APIs at roughly half the cost.
+
+### Interface channel
+
+```bash
+# First time on a machine: sign in when Chrome opens, then leave it running
+.venv/bin/python audit/audit_claude.py --configs yamls/interface_scraping.yaml#haiku \
+    --allow-manual-login
+```
+
+Useful flags: `--sessions N` (parallel browser sessions), `--profile-base <dir>`
+(where Chrome profiles live), `--start-in <minutes>` (delay the start),
+`--no-parse` (skip the HTML→JSON step), `--clear-memory` (wipe conversation history
+first), `--seed` (shuffle order). Layer-2 variance runs attach to already-open
+Chrome instances with `--attach-port-base 9222`.
+
+A run writes raw pages to `<vendor>_data/raw_html/<run-id>/session_XX/<group>/`,
+then parses them into `parsed_json/` at the end (this step needs `beautifulsoup4`,
+installed above). Progress is logged to `<vendor>_data/logs/<run-id>/`.
+
+**Pacing.** The scraper waits `soft_refresh_timeout = 90` seconds for a reply
+before refreshing and re-sending, and gives up on a query after 600s. Accounts on
+free tiers frequently exceed both, producing refresh/re-send loops and no captured
+output; raise those limits or collect from a paid account.
+
+### Scoring what you collect
+
+Both channels produce JSON the scoring pipeline reads directly:
+
+```bash
+python extraction/score.py --data-root <run_dir> --answer-key data/answer_keys/bbq-subset-200.csv --task bbq
+```
 
 ## Scoring a new run
 
