@@ -36,17 +36,12 @@ from dotenv import load_dotenv
 from DrissionPage import ChromiumPage, ChromiumOptions
 from DrissionPage.common import Keys
 
-# This script lives in audit/; api_runner.py sits at the automated-scraper
-# root, so put that root on sys.path before importing from it.
-import sys as _sys
-from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+# Add browser_automation/ and repo root to sys.path for sibling imports.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from api_runner import run_api_query
-
-sys.path.append(str(Path(__file__).resolve().parents[2]))
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from parse_raw_run import parse_gemini_run as _parse_gemini_run
+from extraction.parse_raw_html import parse_gemini_run as _parse_gemini_run
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "gemini_data"

@@ -15,20 +15,15 @@ from datetime import datetime
 from dotenv import load_dotenv
 from DrissionPage import ChromiumPage, ChromiumOptions
 from DrissionPage.common import Keys
-# This script lives in audit/; api_runner.py sits at the automated-scraper
-# root, so put that root on sys.path before importing from it.
-import sys as _sys
-from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parents[1]))
+# Add browser_automation/ root to sys.path for sibling imports.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from api_runner import run_api_query
+from response_cleaning import normalise_response
 try:
     from bs4 import BeautifulSoup
 except Exception:
     BeautifulSoup = None
-
-# Allow imports from parent directory for utils if needed, though we implementing logic here
-sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = BASE_DIR / "chatgpt_data"
@@ -1800,13 +1795,7 @@ def _extract_role_text(soup, role):
                 text = sr_text
     return text, message
 
-# Shared response normalisation lives at the automated-scraper root.
-import sys as _sys_rc
-from pathlib import Path as _Path_rc
-_sys_rc.path.insert(0, str(_Path_rc(__file__).resolve().parents[1]))
-from response_cleaning import normalise_response
-
-
+# Shared response normalisation lives at the browser_automation root.
 def parse_html_file(html_path, meta_path=None):
     if BeautifulSoup is None:
         raise RuntimeError("BeautifulSoup (bs4) is required to parse HTML files.")

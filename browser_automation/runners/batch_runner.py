@@ -5,11 +5,11 @@ polls until all complete, then writes per-query *.api.json files into the same
 output layout api_runner uses, so existing scoring scripts work unchanged.
 
 Run:
-  python automated-scraper/batch_runner.py yamls/<file>.yaml \
+  python browser_automation/batch_runner.py yamls/<file>.yaml \
       --config-api-models --run-id <run_id>
 
 Resume (after submission, before completion):
-  python automated-scraper/batch_runner.py yamls/<file>.yaml \
+  python browser_automation/batch_runner.py yamls/<file>.yaml \
       --config-api-models --run-id <run_id> --resume
 """
 from __future__ import annotations

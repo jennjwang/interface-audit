@@ -15,12 +15,12 @@ interface-audit/
 │   ├── _sweep_sp.py              # Sweep/system-prompt table generation (imported by ablation script)
 │   └── artifacts/                 # Generated tables, figures, and CSVs
 ├── extraction/                # Answer extraction + scoring pipeline
+│   ├── parse_raw_html.py          # Raw HTML scrapes → JSON
 │   └── score.py                   # JSON responses → scored CSV (regex + LLM judge)
 ├── browser_automation/        # Data collection infrastructure
-│   ├── audit/                     # Browser scrapers (ChatGPT, Claude, Gemini; layer 1 + 2)
+│   ├── audit/                     # Browser scrapers (ChatGPT, Claude, Gemini)
 │   ├── runners/                   # Batch API runner + sweep YAML generator
-│   ├── yamls/                     # Experiment configs
-│   ├── outputs/                   # Human validation data + extractor audit trail
+│   ├── yamls/                     # Experiment configs (5 files)
 │   ├── api_runner.py              # Shared API client (Anthropic, OpenAI, Google SDKs)
 │   └── response_cleaning.py      # Normalize scraped interface responses
 ├── data.zip                   # All benchmark data (Git LFS, 287 MB)

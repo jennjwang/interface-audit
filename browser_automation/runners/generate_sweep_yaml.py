@@ -13,9 +13,9 @@ one folder per axis × value.
 
 Example:
 
-    python automated-scraper/generate_sweep_yaml.py \
+    python browser_automation/generate_sweep_yaml.py \
         --model claude-sonnet-4-6 \
-        --query-file ../benchmark_creation/results/bbq-subset-200.csv \
+        --query-file ../data/answer_keys/bbq-subset-200.csv \
         --exp-name bbq \
         --out yamls/sweep_claude_sonnet_bbq.yaml \
         --temperature 0.0,0.5,0.7,1.0 \
@@ -191,7 +191,7 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--model", required=True, help="API model name (e.g., claude-sonnet-4-6)")
     p.add_argument("--out", required=True, help="Output yaml path")
-    p.add_argument("--query-file", required=True, help="Benchmark CSV path (relative to automated-scraper/)")
+    p.add_argument("--query-file", required=True, help="Benchmark CSV path (relative to browser_automation/)")
     p.add_argument("--exp-name", default=None, help="Experiment name (default: query file stem)")
     p.add_argument("--temperature", default=None, help="Comma-separated floats")
     p.add_argument("--top-p", default=None, help="Comma-separated floats in (0, 1.0]")
@@ -243,7 +243,7 @@ def main() -> None:
         cfg_arg = out_path.relative_to(pkg_root)
     except ValueError:
         cfg_arg = out_path
-    print(f">> Run with: python automated-scraper/api_runner.py {cfg_arg} \\")
+    print(f">> Run with: python browser_automation/api_runner.py {cfg_arg} \\")
     print(f"       --config-api-models --run-id sweep-{exp_name}")
 
 

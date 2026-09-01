@@ -68,7 +68,7 @@ def _pop_system_prompt(api_params: dict[str, Any]) -> str | None:
     """Extract an optional system prompt from API params.
 
     YAML configs may pass either ``system_prompt`` directly or
-    ``system_prompt_file`` relative to ``automated-scraper/``.
+    ``system_prompt_file`` relative to ``browser_automation/``.
     """
     system_prompt = api_params.pop("system_prompt", None)
     system_prompt_file = api_params.pop("system_prompt_file", None)
@@ -542,7 +542,7 @@ def main() -> None:
     parser.add_argument(
         "--out-root",
         default=str(DATA_DIR / "api"),
-        help="Root directory for API outputs (default: automated-scraper/data/api)",
+        help="Root directory for API outputs (default: browser_automation/data/api)",
     )
     parser.add_argument(
         "--sleep",
