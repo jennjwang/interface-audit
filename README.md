@@ -64,7 +64,7 @@ Outputs:
 | `bbq/`, `aa-omniscience/`, `elephant-{flip,og}/` | 3 custom benchmarks (280 runs) |
 | `answer_keys/` | Gold answer CSVs for custom benchmarks |
 | `caches/` | LLM judge caches (BBQ, AA-Omni, elephant, system-prompt) |
-| `human_validation/` | Annotator audit data: raw extractor votes, the AA-Omniscience 100-item grader sample, consolidated vote CSVs, and the producer scripts |
+| `human_validation/` | Raw extractor-validation votes from the manual audit rounds, the AA-Omniscience 100-item grader sample, and the consolidation scripts. These are the annotation records; the per-benchmark agreement rates reported in the paper are in the appendix table, not recomputed here |
 | `ablations/` | System-prompt, sampling/reasoning sweeps, account variation, GPT 5.4 instant |
 
 Each run directory contains `responses/` (raw JSON) and `scored.csv` (pre-computed scores).
