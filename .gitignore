@@ -9,12 +9,13 @@ archive/
 *.pyzw
 *.pyzwz
 .DS_Store
-.gitattributes
 
-experiments/
 *.lock
 *.json
 *.ready
 *.hyb
 *.egg-info
-data/
+__pycache__/
+
+# Run data (multi-GB; lives on disk, not in git)
+/data/

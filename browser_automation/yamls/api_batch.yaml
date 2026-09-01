@@ -1,0 +1,195 @@
+# Batch API run configs — submitted via runners/batch_runner.py.
+# Uses OpenAI/Anthropic Batch APIs (50% cheaper, async).
+
+# ── GPT 5.4 No-Thinking: metabench ──────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, web_search: false}
+experiments:
+  - {name: metabench_mmlu}
+  - {name: metabench_arc}
+  - {name: metabench_gsm8k}
+  - {name: metabench_hellaswag}
+  - {name: metabench_truthfulqa}
+  - {name: metabench_winogrande}
+
+---
+# ── GPT 5.4 No-Thinking: BBQ + Elephant ─────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, web_search: false}
+experiments:
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+  - {name: elephant_flip, query_file: ../data/answer_keys/elephant-moral-flip-100.csv}
+
+---
+# ── GPT 5.4 No-Thinking: Elephant OG ────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, web_search: false}
+experiments:
+  - {name: elephant_og, query_file: ../data/answer_keys/elephant-moral-og-100.csv}
+
+---
+# ── GPT 5.4 No-Thinking: GSM8K ──────────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, web_search: false}
+experiments:
+  - {name: metabench_gsm8k}
+
+---
+# ── GPT 5.4 Thinking: AA + BBQ (5 runs) ─────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+
+---
+# ── Claude Opus 4.6: AA + BBQ + Elephant (5 runs) ───────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: claude-opus-4-6, web_search: false}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+  - {name: elephant_flip, query_file: ../data/answer_keys/elephant-moral-flip-100.csv}
+  - {name: elephant_og, query_file: ../data/answer_keys/elephant-moral-og-100.csv}
+
+---
+# ── Claude Opus 4.7: AA + BBQ (5 runs) ──────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: claude-opus-4-7, web_search: false}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+
+---
+# ── Run 5 fill-ins: Claude metabench ────────────────────────────────────
+defaults: {runs: 1, run_offset: 4, shuffle: false}
+api_models:
+  - {model: claude-opus-4-6, web_search: false}
+  - {model: claude-sonnet-4-6, web_search: false}
+experiments:
+  - {name: metabench_mmlu}
+  - {name: metabench_arc}
+  - {name: metabench_gsm8k}
+  - {name: metabench_hellaswag}
+  - {name: metabench_truthfulqa}
+  - {name: metabench_winogrande}
+
+---
+# ── Run 5 fill-in: Claude Opus Winogrande ───────────────────────────────
+defaults: {runs: 1, run_offset: 4, shuffle: false}
+api_models:
+  - {model: claude-opus-4-6, web_search: false}
+experiments:
+  - {name: metabench_winogrande}
+
+---
+# ── Run 5 fill-ins: Gemini metabench ────────────────────────────────────
+defaults: {runs: 1, run_offset: 4, shuffle: false}
+api_models:
+  - {model: gemini-3-flash-preview, thinking_level: high, web_search: false}
+  - {model: gemini-3-flash-preview, thinking_level: low, web_search: false}
+experiments:
+  - {name: metabench_mmlu}
+  - {name: metabench_arc}
+  - {name: metabench_gsm8k}
+  - {name: metabench_hellaswag}
+  - {name: metabench_truthfulqa}
+  - {name: metabench_winogrande}
+
+---
+# ── Run 5 fill-ins: GPT 5.4 AA + BBQ + MMLU ────────────────────────────
+defaults: {runs: 1, run_offset: 4, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+  - {name: metabench_mmlu}
+
+---
+# ── System prompt: AA + BBQ (5 runs) ────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.3-chat-latest, web_search: false, system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"}
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false, system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"}
+  - {model: claude-opus-4-7, web_search: false, system_prompt_file: "../system-prompts/Claude Opus 4.7.md"}
+  - {model: claude-sonnet-4-6, web_search: false, system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"}
+  - {model: gemini-3-flash-preview, thinking_level: high, web_search: false, system_prompt_file: "../system-prompts/Gemini 3 Flash.md"}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}
+
+---
+# ── System prompt: Elephant (5 runs) ────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.3-chat-latest, web_search: false, system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"}
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false, system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"}
+  - {model: claude-opus-4-7, web_search: false, system_prompt_file: "../system-prompts/Claude Opus 4.7.md"}
+  - {model: claude-sonnet-4-6, web_search: false, system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"}
+  - {model: gemini-3-flash-preview, thinking_level: high, web_search: false, system_prompt_file: "../system-prompts/Gemini 3 Flash.md"}
+experiments:
+  - {name: elephant_flip, query_file: ../data/answer_keys/elephant-moral-flip-100.csv}
+  - {name: elephant_og, query_file: ../data/answer_keys/elephant-moral-og-100.csv}
+
+---
+# ── System prompt: metabench ────────────────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.3-chat-latest, web_search: false, system_prompt_file: "../system-prompts/GPT 5.3 Instant.md"}
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false, system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"}
+  - {model: claude-opus-4-7, web_search: false, system_prompt_file: "../system-prompts/Claude Opus 4.7.md"}
+  - {model: claude-sonnet-4-6, web_search: false, system_prompt_file: "../system-prompts/Claude Sonnet 4.6.md"}
+  - {model: gemini-3-flash-preview, thinking_level: high, web_search: false, system_prompt_file: "../system-prompts/Gemini 3 Flash.md"}
+experiments:
+  - {name: metabench_mmlu}
+  - {name: metabench_arc}
+  - {name: metabench_gsm8k}
+  - {name: metabench_hellaswag}
+  - {name: metabench_truthfulqa}
+  - {name: metabench_winogrande}
+
+---
+# ── System prompt: Opus 4.6 metabench ───────────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: claude-opus-4-6, web_search: false, system_prompt_file: "../system-prompts/Claude Opus 4.7.md"}
+experiments:
+  - {name: metabench_mmlu}
+  - {name: metabench_arc}
+  - {name: metabench_gsm8k}
+  - {name: metabench_hellaswag}
+  - {name: metabench_truthfulqa}
+  - {name: metabench_winogrande}
+
+---
+# ── System prompt: Opus 4.6 Winogrande (4 runs fill-in) ─────────────────
+defaults: {runs: 4, shuffle: false}
+api_models:
+  - {model: claude-opus-4-6, web_search: false, system_prompt_file: "../system-prompts/Claude Opus 4.7.md"}
+experiments:
+  - {name: metabench_winogrande}
+
+---
+# ── System prompt: GPT 5.4 MMLU (4 runs fill-in) ───────────────────────
+defaults: {runs: 4, shuffle: false}
+api_models:
+  - {model: gpt-5.4-2026-03-05, reasoning_effort: high, web_search: false, system_prompt_file: "../system-prompts/GPT 5.4 Thinking.md"}
+experiments:
+  - {name: metabench_mmlu}
+
+---
+# ── Account variance: GPT 5.3 AA-Omni + BBQ ─────────────────────────────
+defaults: {runs: 5, shuffle: false}
+api_models:
+  - {model: gpt-5.3-chat-latest, web_search: false}
+experiments:
+  - {name: aa_omniscience, query_file: ../data/answer_keys/aa-omniscience-subset-200.csv}
+  - {name: bbq, query_file: ../data/answer_keys/bbq-subset-200.csv}

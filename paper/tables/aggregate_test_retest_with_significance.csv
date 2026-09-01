@@ -1,9 +1,0 @@
-model,api_mean,interface_mean,gap,gap_se,z,p,n_benchmarks
-Claude Haiku,96.41,93.40,3.02,0.54,5.59,2.24e-08,9
-Claude Sonnet,98.20,95.77,2.42,0.44,5.5,3.80e-08,9
-Claude Opus,98.63,97.80,0.84,0.32,2.62,0.0087,9
-Gemini 3 Fast,96.06,95.87,0.2,0.47,0.43,0.6704,9
-Gemini 3 Thinking,95.60,95.02,0.57,0.47,1.21,0.2252,9
-GPT 5.3 Instant,93.31,88.98,4.34,0.62,7.0,2.56e-12,9
-GPT 5.4 Thinking,95.23,89.34,5.89,0.65,9.06,0.00e+00,9
-"OVERALL (across-system t-test, df=6)",96.21 (SE=0.68),93.74 (SE=1.28),2.47,0.8,3.08,0.0216,"7 systems  95%CI=[0.51, 4.43]"

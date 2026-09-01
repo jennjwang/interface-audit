@@ -1,0 +1,8 @@
+model,model_label,api_pct,ifc_pct,gap_pp
+chatgpt-instant,GPT 5.3 Instant,86.0,83.9,+2.0
+chatgpt-thinking,GPT 5.4 Think,89.7,84.7,+5.0
+claude-haiku,Claude Haiku 4.5,81.8,77.3,+4.5
+claude-opus,Claude Opus 4.6,90.5,87.9,+2.6
+claude-sonnet,Claude Sonnet 4.6,87.8,84.7,+3.1
+gemini-thinking,Gemini 3 Flash Think,91.4,89.4,+2.1
+gemini-fast,Gemini 3 Flash Fast,91.0,86.6,+4.5

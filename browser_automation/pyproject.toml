@@ -1,0 +1,29 @@
+[project]
+name = "browser-automation"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    # Core utilities
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    # Browser automation (audit_claude.py, audit_gemini.py, audit_chatgpt.py)
+    "DrissionPage>=4.0",
+    # HTML -> JSON parsing of scraped interface responses. Without it the
+    # audit scripts collect raw HTML but silently skip the parse step.
+    "beautifulsoup4>=4.12",
+    # LLM provider SDKs
+    "anthropic>=0.84.0",
+    "openai>=1.0",
+    "google-genai>=1.0",
+]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+# Flat script layout: the importable modules sit at the top level, and the
+# sibling directories (audit/, runners/, yamls/, *_data/) are scripts and data,
+# not packages. Without this, setuptools' auto-discovery aborts with
+# "Multiple top-level packages discovered in a flat-layout".
+[tool.setuptools]
+py-modules = ["api_runner", "response_cleaning", "config_loader"]
