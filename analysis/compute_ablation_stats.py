@@ -18,8 +18,10 @@ DATA = RELEASE / "data"
 # ── Answer keys and caches ───────────────────────────────────────────────────
 BBQ_KEY = {str(r["id"]).strip(): r["answer"].strip().upper()
            for r in csv.DictReader(open(DATA / "answer_keys/bbq-subset-200.csv"))}
-bbq_cache = {(e["qid"], e["response"]): e["letter"]
-             for e in json.loads((DATA / "caches/bbq_judgments_cache.json").read_text())}
+_bbq_cache_raw = json.loads((DATA / "caches/bbq_judgments_cache.json").read_text())
+bbq_cache = {(e["qid"], e["response"]): e["letter"] for e in _bbq_cache_raw}
+# Normalized cache: strip whitespace for fuzzy matching on account-variation data
+bbq_cache_norm = {(e["qid"], e["response"].strip()): e["letter"] for e in _bbq_cache_raw}
 
 BBQ_PATTERNS = [r"\*\*([ABC])\.\*\*", r"\*\*([ABC])\*\*",
                 r"(?:answer is|answer:)\s*\**([ABC])\b",
@@ -206,7 +208,7 @@ def account_variation():
                     if not resp or not gold: continue
                     letter = bbq_extract(resp)
                     if not letter:
-                        cached = bbq_cache.get((qid, resp))
+                        cached = bbq_cache.get((qid, resp)) or bbq_cache_norm.get((qid, resp.strip()))
                         if cached and cached != "NONE": letter = cached
                     if letter: total += 1; correct += (1 if letter == gold else 0)
                 if total > 0:
