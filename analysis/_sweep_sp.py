@@ -420,6 +420,10 @@ def generate_sp_table():
         i = order[rank - 1]; cum = min(cum, all_pvals[i] * m / rank); qvals[i] = min(cum, 1.0)
     q_by = {(k, kind): qvals[i] for i, (k, kind) in enumerate(all_keys)}
 
+    n_sp_ifc_sig = sum(1 for (k, kind), q in q_by.items() if kind == "sp" and q < 0.05)
+    n_sp_cells = sum(1 for (k, kind) in q_by if kind == "sp")
+    print(f"\n  SP-IFC significant after BH: {n_sp_ifc_sig}/{n_sp_cells}")
+
     lines = []
     lines.append(r"\begin{longtable}{@{}lrrrrr@{}}")
     lines.append(r"\caption{System-prompt ablation results. SP is the accuracy of the system-prompted API condition in percent. Iface--API is the interface accuracy minus the baseline API accuracy; Iface--SP is the interface accuracy minus the system-prompted API accuracy. Gaps are reported in percentage points. Bold p-values indicate $q < 0.05$ after Benjamini--Hochberg FDR correction across all " + str(m) + r" contrasts.}")
