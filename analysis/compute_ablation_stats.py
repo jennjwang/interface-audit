@@ -18,8 +18,10 @@ DATA = RELEASE / "data"
 # ── Answer keys and caches ───────────────────────────────────────────────────
 BBQ_KEY = {str(r["id"]).strip(): r["answer"].strip().upper()
            for r in csv.DictReader(open(DATA / "answer_keys/bbq-subset-200.csv"))}
-bbq_cache = {(e["qid"], e["response"]): e["letter"]
-             for e in json.loads((DATA / "caches/bbq_judgments_cache.json").read_text())}
+_bbq_cache_raw = json.loads((DATA / "caches/bbq_judgments_cache.json").read_text())
+bbq_cache = {(e["qid"], e["response"]): e["letter"] for e in _bbq_cache_raw}
+# Normalized cache: strip whitespace for fuzzy matching on account-variation data
+bbq_cache_norm = {(e["qid"], e["response"].strip()): e["letter"] for e in _bbq_cache_raw}
 
 BBQ_PATTERNS = [r"\*\*([ABC])\.\*\*", r"\*\*([ABC])\*\*",
                 r"(?:answer is|answer:)\s*\**([ABC])\b",
@@ -206,7 +208,7 @@ def account_variation():
                     if not resp or not gold: continue
                     letter = bbq_extract(resp)
                     if not letter:
-                        cached = bbq_cache.get((qid, resp))
+                        cached = bbq_cache.get((qid, resp)) or bbq_cache_norm.get((qid, resp.strip()))
                         if cached and cached != "NONE": letter = cached
                     if letter: total += 1; correct += (1 if letter == gold else 0)
                 if total > 0:
@@ -214,8 +216,8 @@ def account_variation():
 
     for model in sorted(results):
         acct_means = [np.mean(v) for v in results[model].values()]
-        variation = max(acct_means) - min(acct_means) if len(acct_means) > 1 else 0
-        print(f"  {model}: {len(results[model])} accounts, variation={variation:.2f} pp")
+        sd = np.std(acct_means, ddof=1) if len(acct_means) > 1 else 0
+        print(f"  {model}: {len(results[model])} accounts, means={[f'{m:.1f}' for m in acct_means]}, SD={sd:.2f} pp")
 
     return results  # {model: {session: [run_accs]}}
 
@@ -667,14 +669,14 @@ def system_prompt_test_retest():
         bench_lbl = {"ARC": "metabench-arc", "GSM8K": "metabench-gsm8k",
                      "HellaSwag": "metabench-hellaswag", "MMLU": "metabench-mmlu",
                      "TruthfulQA": "metabench-truthfulQA", "WinoGrande": "metabench-winogrande",
-                     "BBQ": "bbq", "AA-Omni.": "aa-omniscience", "AITA": "elephant-flip"}
+                     "BBQ": "bbq", "AA-Omni.": "aa-omniscience", "Elephant Flip": "elephant-flip"}
         in_tr = False; cur_model = None
         for line in tex_path.read_text().split("\n"):
             if "appendix_test_retest" in line: in_tr = True; continue
             if in_tr and "\\end{longtable}" in line: break
             if not in_tr or "&" not in line: continue
             parts = [p.strip().rstrip("\\").strip() for p in line.split("&")]
-            if len(parts) < 7 or "textbf" in line: continue
+            if len(parts) < 5 or "textbf" in line: continue
             if parts[0]:
                 for lb, mk in model_lbl.items():
                     if lb in parts[0]: cur_model = mk; break
@@ -682,8 +684,9 @@ def system_prompt_test_retest():
             bench = bench_lbl.get(parts[1].strip())
             if not bench: continue
             try:
-                api_tr_main[(cur_model, bench)] = float(parts[3])
-                ifc_tr_main[(cur_model, bench)] = float(parts[4])
+                # Columns: System(0) & Benchmark(1) & R_API(2) & R_Ifc(3) & Delta(4) & p(5)
+                api_tr_main[(cur_model, bench)] = float(parts[2])
+                ifc_tr_main[(cur_model, bench)] = float(parts[3])
             except (ValueError, IndexError): pass
 
     # Matched comparison

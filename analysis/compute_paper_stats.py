@@ -16,7 +16,7 @@ Usage:
     python analysis/compute_paper_stats.py --latex    # also write tables.tex
 
 Bootstrap seeds (for reproducibility):
-    - Overall cluster bootstrap:      seed=42, n=10,000
+    - Overall paired bootstrap:      seed=42, n=10,000
     - Per-benchmark bootstrap:        seed=42, n=10,000
     - Per-cell test-retest bootstrap:  seed=42, n=5,000
     - Per-system test-retest bootstrap: seed=123, n=10,000
@@ -126,6 +126,48 @@ def build_item_level_data():
                     })
 
     return pd.DataFrame(rows)
+
+
+def extraction_pipeline_counts():
+    """Count total attempted vs extracted items across all runs."""
+    total_rows = 0       # rows in scored.csv (got a response)
+    total_extracted = 0  # rows with non-empty answer (extraction succeeded)
+    total_runs = 0
+    # Also count response JSONs to get total attempted (including no-response)
+    total_jsons = 0
+    for bench_dir in sorted(DATA.iterdir()):
+        if not bench_dir.is_dir() or bench_dir.name in ("answer_keys", "caches", "ablations",
+                                                          "human_validation"):
+            continue
+        for model_dir in sorted(bench_dir.iterdir()):
+            if not model_dir.is_dir():
+                continue
+            for surface in ["api", "interface"]:
+                for run_idx in range(5):
+                    run_dir = model_dir / surface / f"run_{run_idx}"
+                    csv_path = run_dir / "scored.csv"
+                    resp_dir = run_dir / "responses"
+                    if not csv_path.exists():
+                        continue
+                    total_runs += 1
+                    if resp_dir.is_dir():
+                        total_jsons += sum(1 for f in resp_dir.glob("*.json")
+                                          if not f.name.startswith("_"))
+                    with open(csv_path) as f:
+                        for r in csv.DictReader(f):
+                            total_rows += 1
+                            ans = (r.get("answer") or "").strip()
+                            if ans:
+                                total_extracted += 1
+    rate_response = total_rows / total_jsons * 100 if total_jsons else 0
+    rate_extract = total_extracted / total_rows * 100 if total_rows else 0
+    print(f"\n--- Extraction Pipeline Counts ---")
+    print(f"Total JSON responses: {total_jsons:,}")
+    print(f"Total scored rows: {total_rows:,} ({rate_response:.1f}% response rate)")
+    print(f"Total with answer: {total_extracted:,} ({rate_extract:.1f}% extraction rate)")
+    print(f"Condition-runs: {total_runs}")
+    return {"jsons": total_jsons, "rows": total_rows, "extracted": total_extracted,
+            "response_rate": rate_response, "extraction_rate": rate_extract, "runs": total_runs}
 
 
 def write_accuracy_csv(df):
@@ -343,7 +385,7 @@ def per_cell_lme(df):
 
 # ── Section 5: Per-benchmark bootstrap ────────────────────────────────────────
 def per_benchmark_bootstrap(df, n_iter=10000):
-    """Per-benchmark cluster bootstrap."""
+    """Per-benchmark paired bootstrap."""
     print("\n" + "=" * 60)
     print("  §app:stat_per_benchmark_boot — Per-Benchmark Bootstrap")
     print("=" * 60)
@@ -533,7 +575,43 @@ def test_retest_reliability(df, n_boot=5000):
                                       "delta": obs_delta, "p": p_sys}
         print(f"{model:<22} {np.mean(api_rs):>6.1f} {np.mean(ifc_rs):>6.1f} {obs_delta:>+6.1f} {p_sys:>9.4f} {sig}")
 
-    return cell_results, per_system_results, {"n_positive": n_positive, "p_binom": p_binom}
+    # Overall test-retest bootstrap (paired, resampling items within each cell)
+    print(f"\n--- Overall Test-Retest Bootstrap ---")
+    rng3 = np.random.default_rng(42)
+    n_overall_boot = 10000
+    boot_deltas_overall = np.zeros(n_overall_boot)
+    for (m, b), (am, im) in cell_data.items():
+        n_q = am.shape[0]
+        boot_idx = rng3.choice(n_q, size=(n_overall_boot, n_q), replace=True)
+        boot_deltas_overall += _pairwise_agreement_batch(am, boot_idx) - _pairwise_agreement_batch(im, boot_idx)
+    boot_deltas_overall /= len(cell_data)
+    all_api = [_pairwise_agreement_vec(am) for (m, b), (am, im) in cell_data.items()]
+    all_ifc = [_pairwise_agreement_vec(im) for (m, b), (am, im) in cell_data.items()]
+    overall_delta = np.mean(all_api) - np.mean(all_ifc)
+    ci_lo = np.percentile(boot_deltas_overall, 2.5)
+    ci_hi = np.percentile(boot_deltas_overall, 97.5)
+    p_overall = min(1.0, 2 * min(np.mean(boot_deltas_overall <= 0), np.mean(boot_deltas_overall >= 0)))
+    se_diff = np.std(boot_deltas_overall)
+    print(f"R_API={np.mean(all_api):.1f}%, R_IFC={np.mean(all_ifc):.1f}%, Δ={overall_delta:+.1f} pp")
+    print(f"95% CI [{ci_lo:.2f}, {ci_hi:.2f}], SE(Δ)={se_diff:.3f}, p={'< 10⁻⁴' if p_overall < 0.0001 else f'{p_overall:.4f}'}")
+
+    # BH correction on cell-level test-retest p-values
+    cell_pvals = sorted([(k, v["p"]) for k, v in cell_results.items()], key=lambda x: x[1])
+    m_cells = len(cell_pvals)
+    n_bh_05 = n_bh_01 = 0
+    for rank_i, ((bk, mk), p_raw) in enumerate(cell_pvals, 1):
+        q_val = p_raw * m_cells / rank_i
+        if q_val < 0.05:
+            n_bh_05 += 1
+        if q_val < 0.01:
+            n_bh_01 += 1
+    print(f"\nBH-adjusted test-retest: {n_bh_05}/{m_cells} at q<0.05, {n_bh_01}/{m_cells} at q<0.01")
+
+    summary = {"n_positive": n_positive, "p_binom": p_binom,
+               "overall_delta": overall_delta, "ci_lo": ci_lo, "ci_hi": ci_hi,
+               "p_overall": p_overall, "se_diff": se_diff,
+               "n_bh_05": n_bh_05, "n_bh_01": n_bh_01}
+    return cell_results, per_system_results, summary
 
 
 # ── Section 7: Spearman rank stability ────────────────────────────────────────
@@ -678,7 +756,7 @@ def generate_latex(df, results, out_path):
     lines.append(r"\begingroup")
     lines.append(r"\begin{table}[!htbp]")
     lines.append(r"\centering\small")
-    lines.append(r"\caption{Per-benchmark cluster bootstrap results.}")
+    lines.append(r"\caption{Per-benchmark paired bootstrap results.}")
     lines.append(r"\label{tab:per_bench_boot}")
     lines.append(r"\begin{tabular}{@{}lrrrrrl@{}}")
     lines.append(r"\toprule")
@@ -987,6 +1065,9 @@ def main():
 
     # Write accuracy CSV
     write_accuracy_csv(df)
+
+    # 0. Extraction pipeline counts
+    extraction_pipeline_counts()
 
     results = {}
 
