@@ -16,7 +16,7 @@ Usage:
     python analysis/compute_paper_stats.py --latex    # also write tables.tex
 
 Bootstrap seeds (for reproducibility):
-    - Overall cluster bootstrap:      seed=42, n=10,000
+    - Overall paired bootstrap:      seed=42, n=10,000
     - Per-benchmark bootstrap:        seed=42, n=10,000
     - Per-cell test-retest bootstrap:  seed=42, n=5,000
     - Per-system test-retest bootstrap: seed=123, n=10,000
@@ -385,7 +385,7 @@ def per_cell_lme(df):
 
 # ── Section 5: Per-benchmark bootstrap ────────────────────────────────────────
 def per_benchmark_bootstrap(df, n_iter=10000):
-    """Per-benchmark cluster bootstrap."""
+    """Per-benchmark paired bootstrap."""
     print("\n" + "=" * 60)
     print("  §app:stat_per_benchmark_boot — Per-Benchmark Bootstrap")
     print("=" * 60)
@@ -756,7 +756,7 @@ def generate_latex(df, results, out_path):
     lines.append(r"\begingroup")
     lines.append(r"\begin{table}[!htbp]")
     lines.append(r"\centering\small")
-    lines.append(r"\caption{Per-benchmark cluster bootstrap results.}")
+    lines.append(r"\caption{Per-benchmark paired bootstrap results.}")
     lines.append(r"\label{tab:per_bench_boot}")
     lines.append(r"\begin{tabular}{@{}lrrrrrl@{}}")
     lines.append(r"\toprule")
